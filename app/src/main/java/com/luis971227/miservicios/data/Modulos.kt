@@ -7,7 +7,8 @@ data class ModuloApp(
     val presentacion: String,
     val colorA: Long,
     val colorB: Long,
-    val opciones: List<OpcionMenu>
+    val opciones: List<OpcionMenu>,
+    val nota: String = ""
 )
 
 data class OpcionMenu(
@@ -138,7 +139,8 @@ object Modulos {
                 pendiente = true,
                 color = 0xFF8B5CF6
             )
-        )
+        ),
+        nota = "La mayoría de los códigos son gratuitos y no necesitan internet. Si alguno no funciona, consulta www.etecsa.cu o llama al servicio al cliente."
     )
 
     val tmv = ModuloApp(
@@ -150,17 +152,152 @@ object Modulos {
         colorB = 0xFF00BFA5,
         opciones = listOf(
             OpcionMenu(
-                id = "ussd",
-                titulo = "Códigos USSD",
-                emoji = "🔢",
-                descripcion = "Lista completa de códigos USSD de Transfermóvil.",
-                pendiente = true,
+                id = "autenticar",
+                titulo = "Autenticar tarjeta",
+                emoji = "🔑",
+                descripcion = "BANMET: *444*40*03# · BANDEC: *444*40*02#. Hazlo primero; sin autenticar no funcionan las demás operaciones.",
+                codigos = listOf("*444*40*03#", "*444*40*02#"),
+                pasos = listOf(
+                    "Identifica tu banco: BANMET o BANDEC",
+                    "Marca el código de autenticación correspondiente",
+                    "Sigue las indicaciones para completar la sesión"
+                ),
+                color = 0xFFB45309
+            ),
+            OpcionMenu(
+                id = "transferir",
+                titulo = "Transferir efectivo",
+                emoji = "💸",
+                descripcion = "Enviar dinero entre cuentas (BANMET/BANDEC).",
+                codigos = listOf("*444*45#"),
+                color = 0xFF059669
+            ),
+            OpcionMenu(
+                id = "pagar-electricidad",
+                titulo = "Pagar electricidad",
+                emoji = "⚡",
+                descripcion = "Pago de la factura eléctrica.",
+                codigos = listOf("*444*41#"),
+                color = 0xFFF59E0B
+            ),
+            OpcionMenu(
+                id = "pagar-telefono",
+                titulo = "Pagar teléfono",
+                emoji = "📞",
+                descripcion = "Pago del servicio telefónico.",
+                codigos = listOf("*444*42#"),
                 color = 0xFF0EA5E9
+            ),
+            OpcionMenu(
+                id = "pagar-onat",
+                titulo = "Pagar ONAT",
+                emoji = "🧾",
+                descripcion = "Pago de impuestos y tributos.",
+                codigos = listOf("*444*43#"),
+                color = 0xFFDC2626
+            ),
+            OpcionMenu(
+                id = "recargar-movil",
+                titulo = "Recargar mi móvil",
+                emoji = "📲",
+                descripcion = "Recargar el saldo de tu propio número.",
+                codigos = listOf("*444*54#"),
+                color = 0xFF10B981
+            ),
+            OpcionMenu(
+                id = "recargar-nauta",
+                titulo = "Recargar Nauta",
+                emoji = "🌐",
+                descripcion = "Recargar una cuenta de correo Nauta.",
+                codigos = listOf("*444*59#"),
+                color = 0xFF6366F1
+            ),
+            OpcionMenu(
+                id = "giro-postal",
+                titulo = "Giro postal",
+                emoji = "✉️",
+                descripcion = "Enviar o cobrar un giro postal.",
+                codigos = listOf("*444*64#"),
+                color = 0xFF8B5CF6
+            ),
+            OpcionMenu(
+                id = "consultar-saldo",
+                titulo = "Consultar saldo",
+                emoji = "💰",
+                descripcion = "Saldo disponible de tus cuentas.",
+                codigos = listOf("*444*46#"),
+                color = 0xFFF59E0B
+            ),
+            OpcionMenu(
+                id = "ultimas-operaciones",
+                titulo = "Últimas operaciones",
+                emoji = "🧮",
+                descripcion = "Movimientos recientes de tu tarjeta.",
+                codigos = listOf("*444*48#"),
+                color = 0xFF0EA5E9
+            ),
+            OpcionMenu(
+                id = "consultar-limite",
+                titulo = "Consultar límite",
+                emoji = "📏",
+                descripcion = "Límite de operaciones vigente.",
+                codigos = listOf("*444*62#"),
+                color = 0xFF10B981
+            ),
+            OpcionMenu(
+                id = "todas-cuentas",
+                titulo = "Ver todas las cuentas",
+                emoji = "🗂️",
+                descripcion = "Listado de tus cuentas asociadas.",
+                codigos = listOf("*444*58#"),
+                color = 0xFF6366F1
+            ),
+            OpcionMenu(
+                id = "cerrar-sesion",
+                titulo = "Cerrar sesión",
+                emoji = "🚪",
+                descripcion = "Termina la sesión de Transfermóvil.",
+                codigos = listOf("*444*70#"),
+                color = 0xFF64748B
+            ),
+            OpcionMenu(
+                id = "cambiar-pin",
+                titulo = "Cambiar PIN",
+                emoji = "🔒",
+                descripcion = "Cambiar el PIN de Transfermóvil.",
+                codigos = listOf("*444*69#"),
+                color = 0xFF7C3AED
+            ),
+            OpcionMenu(
+                id = "cambiar-limite",
+                titulo = "Cambiar límite",
+                emoji = "⚖️",
+                descripcion = "Modificar el límite de tus operaciones.",
+                codigos = listOf("*444*61#"),
+                color = 0xFFDB2777
+            ),
+            OpcionMenu(
+                id = "registro-bandec",
+                titulo = "Registro BANDEC",
+                emoji = "📝",
+                descripcion = "Registrar tu tarjeta de BANDEC.",
+                plantilla = "*444*49*02*{0}#",
+                entrada = "Número de tarjeta",
+                color = 0xFF059669
+            ),
+            OpcionMenu(
+                id = "registro-banmet",
+                titulo = "Registro BANMET",
+                emoji = "📝",
+                descripcion = "Registrar tu tarjeta de BANMET.",
+                plantilla = "*444*49*03*{0}#",
+                entrada = "Número de tarjeta",
+                color = 0xFF0F766E
             ),
             OpcionMenu(
                 id = "menu-ussd",
                 titulo = "Menú USSD *99#",
-                emoji = "📞",
+                emoji = "☎️",
                 codigos = listOf("*99#"),
                 pasos = listOf(
                     "Marca *99#",
@@ -179,7 +316,8 @@ object Modulos {
                 ),
                 color = 0xFF6366F1
             )
-        )
+        ),
+        nota = "Autentica tu tarjeta antes de operar: BANMET usa *444*40*03# y BANDEC *444*40*02#. Estos códigos provienen de fuentes de la comunidad y pueden cambiar con la política bancaria; si alguno falla, confirma en www.transfermovil.cu o en tu banco."
     )
 
     val nota = "La mayoría de los códigos son gratuitos y no necesitan internet. Si alguno no funciona, consulta www.etecsa.cu o llama al servicio al cliente."

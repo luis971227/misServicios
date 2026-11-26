@@ -185,7 +185,7 @@ private fun MenuModulo(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    Modulos.nota,
+                    modulo.nota.ifBlank { Modulos.nota },
                     modifier = Modifier.padding(14.dp),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
