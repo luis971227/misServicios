@@ -117,7 +117,7 @@ private fun MenuModulo(
                 val directa = !opcion.pendiente && opcion.codigo != null
                 TarjetaOpcion(
                     opcion = opcion,
-                    onMarcarDirecto = { onMarcar(opcion.codigo) },
+                    onMarcarDirecto = { opcion.codigo?.let { onMarcar(it) } },
                     onAbrirDetalle = { onAbrirOpcion(opcion) }
                 )
             }
