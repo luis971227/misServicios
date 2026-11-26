@@ -151,8 +151,10 @@ fun App() {
     }
 }
 
-fun marcarCodigo(context: Context, codigo: String) {
-    startActivityCon(context, Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(codigo))))
+fun marcarCodigo(context: Context, codigo: String, llamadaDirecta: Boolean = false) {
+    val uri = Uri.parse("tel:" + Uri.encode(codigo))
+    val accion = if (llamadaDirecta) Intent.ACTION_CALL else Intent.ACTION_DIAL
+    startActivityCon(context, Intent(accion, uri))
 }
 
 fun abrirEnlace(context: Context, url: String) {

@@ -24,8 +24,12 @@ jobs:
 
       - name: Firma fija (keystore debug del repo)
         run: |
-          mkdir -p "$HOME/.android"
-          base64 -d .github/debug.keystore.b64 > "$HOME/.android/debug.keystore"
+          if [ -f .github/debug.keystore.b64 ]; then
+            mkdir -p "$HOME/.android"
+            base64 -d .github/debug.keystore.b64 > "$HOME/.android/debug.keystore"
+          else
+            echo "Sin keystore fijo: se genera uno temporal"
+          fi
 
       - name: Compilar APK debug
         run: ./gradlew assembleDebug --no-daemon --stacktrace

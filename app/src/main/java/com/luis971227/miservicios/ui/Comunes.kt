@@ -1,6 +1,10 @@
 package com.luis971227.miservicios.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,14 +60,34 @@ fun PantallaModulo(modulo: ModuloApp) {
     var abierta by remember(modulo.id) { mutableStateOf<OpcionMenu?>(null) }
     BackHandler(enabled = abierta != null) { abierta = null }
 
+    var codigoPendiente by remember { mutableStateOf<String?>(null) }
+    val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        codigoPendiente?.let { marcarCodigo(context, it, concedido) }
+        codigoPendiente = null
+    }
+
+    fun marcar(codigo: String) {
+        val concedido = ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
+        if (concedido) {
+            marcarCodigo(context, codigo, true)
+        } else {
+            codigoPendiente = codigo
+            pedirPermiso.launch(Manifest.permission.CALL_PHONE)
+        }
+    }
+
     val opcion = abierta
     if (opcion == null) {
-        MenuModulo(modulo) { abierta = it }
+        MenuModulo(
+            modulo = modulo,
+            onMarcar = { marcar(it) },
+            onAbrirOpcion = { abierta = it }
+        )
     } else {
         DetalleOpcion(
             modulo = modulo,
             opcion = opcion,
-            onMarcar = { marcarCodigo(context, it) },
+            onMarcar = { marcar(it) },
             onAbrir = { abrirEnlace(context, it) },
             onVolver = { abierta = null }
         )
@@ -70,7 +95,11 @@ fun PantallaModulo(modulo: ModuloApp) {
 }
 
 @Composable
-private fun MenuModulo(modulo: ModuloApp, onAbrirOpcion: (OpcionMenu) -> Unit) {
+private fun MenuModulo(
+    modulo: ModuloApp,
+    onMarcar: (String) -> Unit,
+    onAbrirOpcion: (OpcionMenu) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,7 +114,12 @@ private fun MenuModulo(modulo: ModuloApp, onAbrirOpcion: (OpcionMenu) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             modulo.opciones.forEach { opcion ->
-                TarjetaOpcion(opcion) { onAbrirOpcion(opcion) }
+                val directa = !opcion.pendiente && opcion.codigo != null
+                TarjetaOpcion(
+                    opcion = opcion,
+                    onMarcarDirecto = { onMarcar(opcion.codigo) },
+                    onAbrirDetalle = { onAbrirOpcion(opcion) }
+                )
             }
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -164,14 +198,15 @@ private fun CabeceraModulo(modulo: ModuloApp) {
 }
 
 @Composable
-private fun TarjetaOpcion(opcion: OpcionMenu, onClick: () -> Unit) {
+private fun TarjetaOpcion(opcion: OpcionMenu, onMarcarDirecto: () -> Unit, onAbrirDetalle: () -> Unit) {
     val acento = Color(opcion.color.toInt())
+    val directa = !opcion.pendiente && opcion.codigo != null
     ElevatedCard(
         shape = RoundedCornerShape(22.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { if (directa) onMarcarDirecto() else onAbrirDetalle() }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -208,6 +243,14 @@ private fun TarjetaOpcion(opcion: OpcionMenu, onClick: () -> Unit) {
                 }
                 if (opcion.pendiente) {
                     ChipPendiente()
+                }
+                if (directa) {
+                    Text(
+                        "ℹ️ Ver pasos",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = acento,
+                        modifier = Modifier.clickable { onAbrirDetalle() }
+                    )
                 }
             }
             Box(
