@@ -35,6 +35,7 @@ import com.luis971227.miservicios.ui.etecsa.EtecsaScreen
 import com.luis971227.miservicios.ui.transfermovil.TransfermovilScreen
 import com.luis971227.miservicios.ui.theme.MisServiciosTheme
 import com.luis971227.miservicios.util.Actualizaciones
+import java.io.File
 
 data class Pestana(val id: String, val titulo: String, val emoji: String)
 
@@ -62,6 +63,8 @@ fun App() {
     var actualizacion by remember { mutableStateOf<Actualizaciones.VersionRemota?>(null) }
     var descargando by remember { mutableStateOf(false) }
     var progreso by remember { mutableStateOf(0) }
+    var archivoListo by remember { mutableStateOf<File?>(null) }
+    var errorDescarga by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         Actualizaciones.hayActualizacion(context) { version ->
@@ -75,37 +78,74 @@ fun App() {
             title = { Text("⬆️ Nueva versión " + remota.version) },
             text = {
                 Column {
-                    if (descargando) {
-                        Text("Descargando actualización… $progreso%")
-                        LinearProgressIndicator(
-                            progress = { progreso / 100f },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp)
-                        )
-                    } else {
-                        Text("Hay una versión nueva (${remota.version}) disponible. ¿Descargarla e instalarla ahora?")
+                    when {
+                        descargando -> {
+                            Text("Descargando actualización… $progreso%")
+                            LinearProgressIndicator(
+                                progress = { progreso / 100f },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp)
+                            )
+                        }
+                        archivoListo != null -> {
+                            Text("Descarga lista. Si el instalador no se abrió solo:")
+                            Text(
+                                "1. Concede el permiso «Instalar apps desconocidas» a misServicios",
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                            Text("2. Vuelve aquí y toca Instalar")
+                        }
+                        errorDescarga -> {
+                            Text("No se pudo descargar. Revisa tu conexión y reintenta.")
+                        }
+                        else -> {
+                            Text("Hay una versión nueva (${remota.version}) disponible. ¿Descargarla e instalarla ahora?")
+                        }
                     }
                 }
             },
             confirmButton = {
-                if (!descargando) {
-                    TextButton(onClick = {
-                        descargando = true
-                        progreso = 0
-                        Actualizaciones.descargar(
-                            context = context,
-                            url = remota.urlApk,
-                            onProgreso = { progreso = it },
-                            alListo = { archivo ->
-                                descargando = false
-                                if (archivo != null) {
-                                    actualizacion = null
-                                    Actualizaciones.instalar(context, archivo)
-                                }
+                when {
+                    descargando -> {}
+                    archivoListo != null -> {
+                        TextButton(onClick = {
+                            if (Actualizaciones.puedeInstalar(context)) {
+                                Actualizaciones.instalar(context, archivoListo)
+                                archivoListo = null
+                                actualizacion = null
+                            } else {
+                                Actualizaciones.abrirPermisoInstalacion(context)
                             }
-                        )
-                    }) { Text("Descargar") }
+                        }) { Text("Instalar") }
+                    }
+                    else -> {
+                        TextButton(onClick = {
+                            descargando = true
+                            errorDescarga = false
+                            progreso = 0
+                            Actualizaciones.descargar(
+                                context = context,
+                                url = remota.urlApk,
+                                onProgreso = { progreso = it },
+                                alListo = { archivo ->
+                                    descargando = false
+                                    if (archivo != null) {
+                                        archivoListo = archivo
+                                        if (!Actualizaciones.puedeInstalar(context)) {
+                                            Actualizaciones.abrirPermisoInstalacion(context)
+                                        } else {
+                                            Actualizaciones.instalar(context, archivo)
+                                            archivoListo = null
+                                            actualizacion = null
+                                        }
+                                    } else {
+                                        errorDescarga = true
+                                    }
+                                }
+                            )
+                        }) { Text(if (errorDescarga) "Reintentar" else "Descargar") }
+                    }
                 }
             },
             dismissButton = {

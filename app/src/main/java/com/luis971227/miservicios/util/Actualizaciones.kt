@@ -2,8 +2,11 @@ package com.luis971227.miservicios.util
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import com.luis971227.miservicios.BuildConfig
 import org.json.JSONObject
@@ -29,6 +32,7 @@ object Actualizaciones {
                 conn.connectTimeout = 10000
                 conn.readTimeout = 10000
                 conn.setRequestProperty("Accept", "application/vnd.github+json")
+                conn.setRequestProperty("User-Agent", "misServicios/" + BuildConfig.VERSION_NAME)
                 if (conn.responseCode == 200) {
                     val texto = conn.inputStream.bufferedReader().use { it.readText() }
                     val json = JSONObject(texto)
@@ -68,10 +72,16 @@ object Actualizaciones {
             try {
                 val conexion = URL(url).openConnection() as HttpURLConnection
                 conexion.connectTimeout = 15000
-                conexion.readTimeout = 30000
+                conexion.readTimeout = 60000
+                conexion.instanceFollowRedirects = true
+                conexion.setRequestProperty("User-Agent", "misServicios/" + BuildConfig.VERSION_NAME)
                 val total = conexion.contentLengthLong
-                val salida = File(context.cacheDir, "misServicios-actualizado.apk")
-                salida.outputStream().use { out ->
+                val carpeta = File(context.cacheDir, "updates")
+                if (!carpeta.exists()) carpeta.mkdirs()
+                val temporal = File(carpeta, "misServicios-actualizado.apk.part")
+                val salida = File(carpeta, NOMBRE_APK)
+                if (salida.exists()) salida.delete()
+                temporal.outputStream().use { out ->
                     conexion.inputStream.use { input ->
                         val buffer = ByteArray(64 * 1024)
                         var leidos = 0L
@@ -91,12 +101,37 @@ object Actualizaciones {
                         }
                     }
                 }
-                destino = salida
+                if (temporal.length() > 0 && temporal.renameTo(salida)) {
+                    destino = salida
+                }
             } catch (e: Exception) {
                 destino = null
             }
             main.post { alListo(destino) }
         }.start()
+    }
+
+    fun puedeInstalar(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.packageManager.canRequestPackageInstalls()
+        } else {
+            true
+        }
+    }
+
+    fun abrirPermisoInstalacion(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + context.packageName)
+            )
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } else {
+            val intent = Intent(Settings.ACTION_SECURITY_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        }
     }
 
     fun instalar(context: Context, archivo: File) {
