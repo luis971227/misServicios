@@ -22,6 +22,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Firma fija (keystore debug del repo)
+        run: |
+          mkdir -p "$HOME/.android"
+          base64 -d .github/debug.keystore.b64 > "$HOME/.android/debug.keystore"
+
       - name: Compilar APK debug
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
