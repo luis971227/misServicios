@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -374,42 +373,6 @@ fun PantallaTransferir(
                 )
             }
 
-            if (!Settings.canDrawOverlays(context)) {
-                ElevatedCard(
-                    shape = RoundedCornerShape(22.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            "🖼️ Cortina de transferencia",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "Permite que misServicios aparezca encima y verás una pantalla de carga en vez de los parpadeos de los diálogos del banco.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        OutlinedButton(
-                            onClick = {
-                                context.startActivity(
-                                    Intent(
-                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                        Uri.parse("package:com.luis971227.miservicios")
-                                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                )
-                            },
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("⚙️ Permitir aparecer encima")
-                        }
-                    }
-                }
-            }
 
             if (!AsistenteUssd.estaActivo(context)) {
                 ElevatedCard(

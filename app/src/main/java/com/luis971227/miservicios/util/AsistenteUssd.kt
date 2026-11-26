@@ -193,14 +193,6 @@ class AsistenteUssd : AccessibilityService() {
     fun mostrarCortina() {
         handler.post {
             if (cortina != null) return@post
-            if (!Settings.canDrawOverlays(this)) {
-                Toast.makeText(
-                    this,
-                    "Para la cortina: permite 'Aparecer encima' a misServicios",
-                    Toast.LENGTH_LONG
-                ).show()
-                return@post
-            }
             val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
             val contenido = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
@@ -220,18 +212,33 @@ class AsistenteUssd : AccessibilityService() {
             }
             contenido.addView(texto)
             contenido.addView(boton)
-            val params = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT
-            )
             try {
+                val params = WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                    PixelFormat.TRANSLUCENT
+                )
                 wm.addView(contenido, params)
                 cortina = contenido
                 handler.postDelayed({ ocultarCortina() }, 120_000)
             } catch (_: Exception) {
+                if (Settings.canDrawOverlays(this)) {
+                    try {
+                        val params = WindowManager.LayoutParams(
+                            WindowManager.LayoutParams.MATCH_PARENT,
+                            WindowManager.LayoutParams.MATCH_PARENT,
+                            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                            PixelFormat.TRANSLUCENT
+                        )
+                        wm.addView(contenido, params)
+                        cortina = contenido
+                        handler.postDelayed({ ocultarCortina() }, 120_000)
+                    } catch (_: Exception) {
+                    }
+                }
             }
         }
     }
