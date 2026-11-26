@@ -57,6 +57,7 @@ import com.luis971227.miservicios.data.Modulos
 import com.luis971227.miservicios.data.ModuloApp
 import com.luis971227.miservicios.data.OpcionMenu
 import com.luis971227.miservicios.marcarCodigo
+import com.luis971227.miservicios.ui.etecsa.PantallaCompras
 
 @Composable
 fun PantallaModulo(modulo: ModuloApp) {
@@ -64,7 +65,8 @@ fun PantallaModulo(modulo: ModuloApp) {
     var abierta by remember(modulo.id) { mutableStateOf<OpcionMenu?>(null) }
     var entradaPara by remember { mutableStateOf<OpcionMenu?>(null) }
     var textoEntrada by remember { mutableStateOf("") }
-    BackHandler(enabled = abierta != null) { abierta = null }
+    var comprasAbierta by remember(modulo.id) { mutableStateOf(false) }
+    BackHandler(enabled = abierta != null && !comprasAbierta) { abierta = null }
 
     var codigoPendiente by remember { mutableStateOf<String?>(null) }
     val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
@@ -83,11 +85,17 @@ fun PantallaModulo(modulo: ModuloApp) {
     }
 
     val opcion = abierta
-    if (opcion == null) {
+    if (comprasAbierta) {
+        PantallaCompras(
+            onVolver = { comprasAbierta = false },
+            onMarcar = { marcar(it) }
+        )
+    } else if (opcion == null) {
         MenuModulo(
             modulo = modulo,
             onToque = { tocada ->
                 when {
+                    tocada.pantalla == "compras" -> comprasAbierta = true
                     tocada.pendiente -> abierta = tocada
                     tocada.entrada != null -> {
                         entradaPara = tocada

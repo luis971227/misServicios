@@ -21,7 +21,8 @@ data class OpcionMenu(
     val pendiente: Boolean = false,
     val color: Long = 0xFF64748B,
     val entrada: String? = null,
-    val plantilla: String? = null
+    val plantilla: String? = null,
+    val pantalla: String? = null
 )
 
 object Modulos {
@@ -38,13 +39,8 @@ object Modulos {
                 id = "comprar-paquetes",
                 titulo = "Comprar paquetes y planes",
                 emoji = "🛒",
-                descripcion = "Compra planes de datos, voz o SMS con el menú interactivo.",
-                codigos = listOf("*133#"),
-                pasos = listOf(
-                    "Marca *133#",
-                    "Sigue las instrucciones del menú",
-                    "Elige el plan de datos, voz o SMS que quieras"
-                ),
+                descripcion = "Elige datos, SMS, voz o Plan Amigos dentro de la app y marca directo.",
+                pantalla = "compras",
                 color = 0xFF6366F1
             ),
             OpcionMenu(
