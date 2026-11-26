@@ -84,10 +84,11 @@ class AsistenteUssd : AccessibilityService() {
             texto.contains("seguro que", true) ||
             texto.contains("confirmar", true) ||
             texto.contains("confirma", true)
+        val esMoneda = Regex("\\b(moneda|divisa|cup|mlc)\\b", RegexOption.IGNORE_CASE).containsMatchIn(texto)
         if (campo == null) {
             if (esConfirmacion) {
                 pulsarBoton()
-            } else if (texto.contains("moneda", ignoreCase = true)) {
+            } else if (esMoneda) {
                 pulsarBotonDeTexto(moneda)
             }
             return
@@ -96,11 +97,14 @@ class AsistenteUssd : AccessibilityService() {
 
         val valor = when {
             texto.contains("monto", ignoreCase = true) ||
-                texto.contains("importe", ignoreCase = true) -> monto
+                texto.contains("importe", ignoreCase = true) ||
+                texto.contains("cantidad", ignoreCase = true) -> monto
             texto.contains("mensaje", ignoreCase = true) ||
                 texto.contains("concepto", ignoreCase = true) ||
                 texto.contains("notificaci", ignoreCase = true) -> concepto
-            texto.contains("moneda", ignoreCase = true) -> if (moneda == "MLC") "2" else "1"
+            esMoneda -> Regex("(\\d)\\s*\\.?\\s*" + moneda, RegexOption.IGNORE_CASE)
+                .find(texto)?.groupValues?.getOrNull(1)
+                ?: if (moneda == "MLC") "2" else "1"
             texto.contains("teléfono", ignoreCase = true) ||
                 texto.contains("telefono", ignoreCase = true) -> telefono
             texto.contains("cuenta", ignoreCase = true) ||
@@ -189,7 +193,14 @@ class AsistenteUssd : AccessibilityService() {
     fun mostrarCortina() {
         handler.post {
             if (cortina != null) return@post
-            if (!Settings.canDrawOverlays(this)) return@post
+            if (!Settings.canDrawOverlays(this)) {
+                Toast.makeText(
+                    this,
+                    "Para la cortina: permite 'Aparecer encima' a misServicios",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@post
+            }
             val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
             val contenido = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
