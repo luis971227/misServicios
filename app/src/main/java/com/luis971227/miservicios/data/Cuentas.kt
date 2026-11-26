@@ -6,7 +6,8 @@ import org.json.JSONObject
 
 data class CuentaGuardada(
     val nombre: String,
-    val numero: String
+    val numero: String,
+    val telefono: String = ""
 )
 
 object Cuentas {
@@ -18,7 +19,11 @@ object Cuentas {
         val arr = JSONArray(json)
         return (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
-            CuentaGuardada(o.optString("nombre", ""), o.optString("numero", ""))
+            CuentaGuardada(
+                o.optString("nombre", ""),
+                o.optString("numero", ""),
+                o.optString("telefono", "")
+            )
         }.filter { it.numero.isNotBlank() }
     }
 
@@ -36,7 +41,12 @@ object Cuentas {
     private fun escribir(context: Context, lista: List<CuentaGuardada>) {
         val arr = JSONArray()
         lista.forEach {
-            arr.put(JSONObject().put("nombre", it.nombre).put("numero", it.numero))
+            arr.put(
+                JSONObject()
+                    .put("nombre", it.nombre)
+                    .put("numero", it.numero)
+                    .put("telefono", it.telefono)
+            )
         }
         context
             .getSharedPreferences("miservicios", Context.MODE_PRIVATE)

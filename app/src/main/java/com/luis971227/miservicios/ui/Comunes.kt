@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -270,7 +271,9 @@ private fun MenuModulo(
                             )
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                modifier = Modifier.padding(top = 2.dp)
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .horizontalScroll(rememberScrollState())
                             ) {
                                 val portapapeles = LocalContext.current
                                 TextButton(
@@ -298,6 +301,23 @@ private fun MenuModulo(
                                     ) {
                                         Text(
                                             "💵 Copiar monto",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF0A5C46)
+                                        )
+                                    }
+                                }
+                                val concepto = Regex("Concepto: (.+)$").find(resumen.second)?.groupValues?.getOrNull(1)
+                                if (concepto != null) {
+                                    TextButton(
+                                        onClick = {
+                                            val cm = portapapeles.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                            cm.setPrimaryClip(ClipData.newPlainText("mensaje", concepto))
+                                        },
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)
+                                    ) {
+                                        Text(
+                                            "✉️ Copiar mensaje",
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF0A5C46)

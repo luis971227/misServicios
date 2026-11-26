@@ -39,15 +39,36 @@ object Perfil {
     }
 
     fun parsearQr(texto: String): DatosPerfil? {
-        return try {
-            val o = JSONObject(texto)
-            if (o.optString("app") != "miservicios") return null
-            DatosPerfil(
-                nombre = o.optString("nombre", ""),
-                telefono = o.optString("telefono", ""),
-                tarjeta = o.optString("tarjeta", "")
-            )
-        } catch (e: Exception) {
+        val t = texto.trim()
+        try {
+            val o = JSONObject(t)
+            if (o.optString("app") == "miservicios") {
+                return DatosPerfil(
+                    nombre = o.optString("nombre", ""),
+                    telefono = o.optString("telefono", ""),
+                    tarjeta = o.optString("tarjeta", "")
+                )
+            }
+            val tarjeta = listOf("tarjeta", "card", "cuenta", "account", "numero")
+                .firstNotNullOfOrNull { k ->
+                    o.optString(k, "").trim().takeIf { v -> v.isNotBlank() && v.matches(Regex("\\d{8,19}")) }
+                }
+            val telefono = listOf("telefono", "phone", "tel", "movil")
+                .firstNotNullOfOrNull { k ->
+                    o.optString(k, "").trim().takeIf { v -> v.matches(Regex("5\\d{7}")) }
+                }
+            val nombre = listOf("nombre", "name", "titular")
+                .firstNotNullOfOrNull { k -> o.optString(k, "").trim().takeIf { it.isNotBlank() } }
+            if (tarjeta != null || telefono != null) {
+                return DatosPerfil(nombre = nombre ?: "", telefono = telefono ?: "", tarjeta = tarjeta ?: "")
+            }
+        } catch (_: Exception) {
+        }
+        val tarjeta = Regex("\\b\\d{16}\\b").find(t)?.value
+        val telefono = Regex("\\b5\\d{7}\\b").find(t)?.value
+        return if (tarjeta != null || telefono != null) {
+            DatosPerfil(telefono = telefono ?: "", tarjeta = tarjeta ?: "")
+        } else {
             null
         }
     }

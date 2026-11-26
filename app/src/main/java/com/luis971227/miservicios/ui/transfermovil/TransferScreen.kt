@@ -59,6 +59,7 @@ fun PantallaTransferir(
     var cuentas by remember { mutableStateOf(Cuentas.listar(context)) }
     var destino by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
     var monto by remember { mutableStateOf("") }
     var concepto by remember { mutableStateOf("") }
     var guardarNueva by remember { mutableStateOf(true) }
@@ -72,9 +73,10 @@ fun PantallaTransferir(
         if (datos != null) {
             nombre = datos.nombre
             destino = datos.tarjeta.ifBlank { datos.telefono }
+            telefono = datos.telefono
             mensaje = null
         } else {
-            mensaje = "El QR escaneado no es de misServicios"
+            mensaje = "Este QR no trae el número en claro; escribe el destinatario manualmente"
         }
     }
 
@@ -169,6 +171,7 @@ fun PantallaTransferir(
                                     .clickable {
                                         destino = cuenta.numero
                                         nombre = cuenta.nombre
+                                        telefono = cuenta.telefono
                                     }
                             ) {
                                 Text(
@@ -230,6 +233,14 @@ fun PantallaTransferir(
                             )
                         }
                     }
+                    OutlinedTextField(
+                        value = telefono,
+                        onValueChange = { telefono = it.filter { c -> c.isDigit() }.take(8) },
+                        label = { Text("Teléfono del destinatario (para el aviso)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     OutlinedButton(
                         onClick = {
                             escaner.launch(
@@ -300,11 +311,12 @@ fun PantallaTransferir(
                         return@Button
                     }
                     if (guardarNueva && cuentas.none { it.numero == numero }) {
-                        Cuentas.guardar(context, CuentaGuardada(nombre, numero))
+                        Cuentas.guardar(context, CuentaGuardada(nombre, numero, telefono.trim()))
                     }
-                    val detalle = "Monto: " + monto.trim() +
-                        if (concepto.isNotBlank()) " · Concepto: " + concepto.trim() else ""
-                    onTransferir(numero, detalle)
+                    val partes = mutableListOf("Monto: " + monto.trim())
+                    if (telefono.isNotBlank()) partes.add("Teléfono: " + telefono.trim())
+                    if (concepto.isNotBlank()) partes.add("Concepto: " + concepto.trim())
+                    onTransferir(numero, partes.joinToString(" · "))
                 },
                 enabled = destino.isNotBlank() && monto.isNotBlank(),
                 shape = RoundedCornerShape(14.dp),
