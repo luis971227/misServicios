@@ -63,6 +63,7 @@ object Modulos {
                 emoji = "💰",
                 descripcion = "Saldo principal, voz, SMS, datos y vencimiento de la línea.",
                 codigos = listOf("*222#"),
+                ocultarCodigos = true,
                 pasos = listOf("Marca *222#", "En unos segundos aparece el resumen en pantalla"),
                 color = 0xFFF59E0B
             ),
@@ -72,6 +73,7 @@ object Modulos {
                 emoji = "📶",
                 descripcion = "Datos restantes y fecha de validez.",
                 codigos = listOf("*222*328#"),
+                ocultarCodigos = true,
                 pasos = listOf("Marca *222*328#", "Verás los datos disponibles y su validez"),
                 color = 0xFF0EA5E9
             ),
@@ -81,6 +83,7 @@ object Modulos {
                 emoji = "🗣️",
                 descripcion = "Minutos de voz restantes.",
                 codigos = listOf("*222*869#"),
+                ocultarCodigos = true,
                 pasos = listOf("Marca *222*869#", "Verás los minutos disponibles"),
                 color = 0xFF10B981
             ),
@@ -90,6 +93,7 @@ object Modulos {
                 emoji = "✉️",
                 descripcion = "SMS restantes.",
                 codigos = listOf("*222*767#"),
+                ocultarCodigos = true,
                 pasos = listOf("Marca *222*767#", "Verás los SMS disponibles"),
                 color = 0xFF8B5CF6
             ),
@@ -99,6 +103,7 @@ object Modulos {
                 emoji = "💵",
                 descripcion = "Bonificaciones y planes en moneda libremente convertible.",
                 codigos = listOf("*222*266#"),
+                ocultarCodigos = true,
                 pasos = listOf("Marca *222*266#", "Verás tus bonificaciones y planes en USD"),
                 color = 0xFF059669
             ),
@@ -108,6 +113,7 @@ object Modulos {
                 emoji = "🔄",
                 descripcion = "Límite de recarga restante o estado de la recarga nacional.",
                 codigos = listOf("*222*732#"),
+                ocultarCodigos = true,
                 pasos = listOf("Marca *222*732#", "Verás el estado de tu recarga"),
                 color = 0xFF14B8A6
             ),
@@ -118,6 +124,7 @@ object Modulos {
                 descripcion = "Recarga con el código impreso en tu tarjeta.",
                 plantilla = "*662*{0}#",
                 entrada = "Código de la tarjeta de recarga",
+                ocultarCodigos = true,
                 pasos = listOf(
                     "Toca la opción y escribe el código de la tarjeta",
                     "La app marca *662*código# automáticamente"
@@ -130,6 +137,8 @@ object Modulos {
                 emoji = "☎️",
                 descripcion = "Hablar con atención al cliente de ETECSA.",
                 codigos = listOf("*2266", "164"),
+                etiquetas = listOf("Marcar por USSD", "Llamar al 164"),
+                ocultarCodigos = true,
                 pasos = listOf("Marca *2266 o llama al 164"),
                 color = 0xFFDC2626
             ),
@@ -155,24 +164,33 @@ object Modulos {
         opciones = listOf(
             OpcionMenu(
                 id = "autenticar",
-                titulo = "Autenticar tarjeta",
+                titulo = "Autenticarse",
                 emoji = "🔑",
-                descripcion = "Autentica tu tarjeta de BANMET o BANDEC. Es obligatorio antes de usar las demás operaciones.",
+                descripcion = "Autentica tu sesión de Transfermóvil con tu PIN. No es el PIN de la tarjeta ni de Telebanca.",
                 codigos = listOf("*444*40*03#", "*444*40*02#"),
                 etiquetas = listOf("BANMET", "BANDEC"),
                 ocultarCodigos = true,
                 pasos = listOf(
-                    "Identifica tu banco: BANMET o BANDEC",
-                    "Toca el botón de tu banco y completa la autenticación",
-                    "Cuando termines, se desbloquean las demás opciones"
+                    "Elige tu banco: BANMET o BANDEC",
+                    "Cuando el sistema lo pida, escribe tu PIN de Transfermóvil",
+                    "Listo: se desbloquean las demás operaciones"
                 ),
                 color = 0xFFB45309
+            ),
+            OpcionMenu(
+                id = "perfil",
+                titulo = "Mi perfil y QR",
+                emoji = "👤",
+                descripcion = "Guarda tu tarjeta, genera tu QR y escanea el de otros.",
+                pantalla = "perfil",
+                color = 0xFF0D9488
             ),
             OpcionMenu(
                 id = "transferir",
                 titulo = "Transferir efectivo",
                 emoji = "💸",
-                descripcion = "Enviar dinero entre cuentas (BANMET/BANDEC).",
+                descripcion = "Elige una cuenta guardada, escanea un QR o escribe la tarjeta.",
+                pantalla = "transferir",
                 codigos = listOf("*444*45#"),
                 ocultarCodigos = true,
                 color = 0xFF059669

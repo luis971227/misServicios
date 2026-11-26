@@ -7,6 +7,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +33,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import com.luis971227.miservicios.ui.etecsa.EtecsaScreen
 import com.luis971227.miservicios.ui.transfermovil.TransfermovilScreen
 import com.luis971227.miservicios.ui.theme.MisServiciosTheme
@@ -66,10 +71,35 @@ fun App() {
     var archivoListo by remember { mutableStateOf<File?>(null) }
     var errorDescarga by remember { mutableStateOf(false) }
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var ultimaRevision by remember { mutableStateOf(0L) }
+
     LaunchedEffect(Unit) {
+        ultimaRevision = System.currentTimeMillis()
         Actualizaciones.hayActualizacion(context) { version ->
-            actualizacion = version
+            if (version != null && !descargando && archivoListo == null) actualizacion = version
         }
+        while (true) {
+            delay(180_000)
+            Actualizaciones.hayActualizacion(context) { version ->
+                if (version != null && !descargando && archivoListo == null) actualizacion = version
+            }
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observador = LifecycleEventObserver { _, evento ->
+            if (evento == Lifecycle.Event.ON_RESUME &&
+                System.currentTimeMillis() - ultimaRevision > 60_000
+            ) {
+                ultimaRevision = System.currentTimeMillis()
+                Actualizaciones.hayActualizacion(context) { version ->
+                    if (version != null && !descargando && archivoListo == null) actualizacion = version
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observador)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observador) }
     }
 
     actualizacion?.let { remota ->

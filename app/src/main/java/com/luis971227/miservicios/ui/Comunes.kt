@@ -53,12 +53,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import com.luis971227.miservicios.abrirEnlace
+import com.luis971227.miservicios.data.CuentaGuardada
+import com.luis971227.miservicios.data.Cuentas
 import com.luis971227.miservicios.data.Modulos
 import com.luis971227.miservicios.data.ModuloApp
 import com.luis971227.miservicios.data.OpcionMenu
+import com.luis971227.miservicios.data.Perfil
 import com.luis971227.miservicios.marcarCodigo
 import com.luis971227.miservicios.ui.etecsa.PantallaCompras
+import com.luis971227.miservicios.ui.transfermovil.PantallaPerfil
 
 @Composable
 fun PantallaModulo(modulo: ModuloApp) {
@@ -84,6 +90,21 @@ fun PantallaModulo(modulo: ModuloApp) {
         modulo.opciones
     }
 
+    var perfilAbierto by remember(modulo.id) { mutableStateOf(false) }
+    var transferirAbierto by remember(modulo.id) { mutableStateOf(false) }
+    var cuentasTmv by remember { mutableStateOf(Cuentas.listar(context)) }
+    var cuentaSel by remember { mutableStateOf("") }
+    var nombreSel by remember { mutableStateOf("") }
+    var guardarNueva by remember { mutableStateOf(true) }
+    var cuentaMarcada by remember { mutableStateOf<String?>(null) }
+    val escanerTransfer = rememberLauncherForActivityResult(ScanContract()) { resultado ->
+        val texto = resultado.contents ?: return@rememberLauncherForActivityResult
+        val datos = Perfil.parsearQr(texto) ?: return@rememberLauncherForActivityResult
+        nombreSel = datos.nombre
+        cuentaSel = datos.tarjeta.ifBlank { datos.telefono }
+        guardarNueva = true
+    }
+
     var codigoPendiente by remember { mutableStateOf<String?>(null) }
     val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
         codigoPendiente?.let { marcarCodigo(context, it, concedido) }
@@ -101,7 +122,9 @@ fun PantallaModulo(modulo: ModuloApp) {
     }
 
     val opcion = abierta
-    if (comprasAbierta) {
+    if (perfilAbierto) {
+        PantallaPerfil(onVolver = { perfilAbierto = false })
+    } else if (comprasAbierta) {
         PantallaCompras(
             inicioId = comprasInicio,
             onVolver = { comprasAbierta = false },
@@ -112,8 +135,18 @@ fun PantallaModulo(modulo: ModuloApp) {
             modulo = modulo,
             opciones = opcionesVisibles,
             bloqueado = requiereAutenticacion && !autenticado,
+            cuentaMarcada = cuentaMarcada,
+            onOcultarCuenta = { cuentaMarcada = null },
             onToque = { tocada ->
                 when {
+                    tocada.pantalla == "transferir" -> {
+                        cuentasTmv = Cuentas.listar(context)
+                        cuentaSel = ""
+                        nombreSel = ""
+                        guardarNueva = true
+                        transferirAbierto = true
+                    }
+                    tocada.pantalla == "perfil" -> perfilAbierto = true
                     tocada.pantalla == "compras" -> {
                         comprasInicio = tocada.inicio ?: "raiz"
                         comprasAbierta = true
@@ -153,6 +186,110 @@ fun PantallaModulo(modulo: ModuloApp) {
         )
     }
 
+    if (transferirAbierto) {
+        val yaGuardada = cuentasTmv.any { it.numero == cuentaSel.trim() }
+        AlertDialog(
+            onDismissRequest = { transferirAbierto = false },
+            title = { Text("💸 Transferir efectivo") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (cuentasTmv.isNotEmpty()) {
+                        Text(
+                            "CUENTAS GUARDADAS",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            letterSpacing = 2.sp
+                        )
+                        cuentasTmv.forEach { cuenta ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        cuentaSel = cuenta.numero
+                                        nombreSel = cuenta.nombre
+                                    }
+                            ) {
+                                Text(
+                                    if (cuentaSel == cuenta.numero) "☑" else "⬜",
+                                    fontSize = 18.sp
+                                )
+                                Column(
+                                    modifier = Modifier.padding(start = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                                ) {
+                                    if (cuenta.nombre.isNotBlank()) {
+                                        Text(
+                                            cuenta.nombre,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Text(
+                                        cuenta.numero,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    OutlinedTextField(
+                        value = cuentaSel,
+                        onValueChange = { cuentaSel = it },
+                        label = { Text("Tarjeta del destinatario") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (cuentaSel.isNotBlank() && !yaGuardada) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { guardarNueva = !guardarNueva }
+                        ) {
+                            Text(if (guardarNueva) "☑" else "⬜", fontSize = 18.sp)
+                            Text(
+                                "Guardar esta cuenta",
+                                modifier = Modifier.padding(start = 10.dp),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                    TextButton(onClick = {
+                        escanerTransfer.launch(
+                            ScanOptions()
+                                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                                .setPrompt("Apunta al código QR")
+                                .setBeepEnabled(false)
+                        )
+                    }) { Text("📷 Escanear QR de otra persona") }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = cuentaSel.isNotBlank(),
+                    onClick = {
+                        val numero = cuentaSel.trim()
+                        if (!yaGuardada && guardarNueva) {
+                            Cuentas.guardar(context, CuentaGuardada(nombreSel, numero))
+                        }
+                        transferirAbierto = false
+                        cuentaMarcada = numero
+                        marcar("*444*45#")
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("📞 Marcar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { transferirAbierto = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
     entradaPara?.let { opcionEntrada ->
         AlertDialog(
             onDismissRequest = { entradaPara = null },
@@ -189,6 +326,8 @@ private fun MenuModulo(
     modulo: ModuloApp,
     opciones: List<OpcionMenu>,
     bloqueado: Boolean,
+    cuentaMarcada: String?,
+    onOcultarCuenta: () -> Unit,
     onToque: (OpcionMenu) -> Unit,
     onVerPasos: (OpcionMenu) -> Unit
 ) {
@@ -205,6 +344,43 @@ private fun MenuModulo(
                 .offset(y = (-24).dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (cuentaMarcada != null) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFE7F5EF),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 14.dp, top = 4.dp, bottom = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                "📤 Transfieres a:",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0A5C46)
+                            )
+                            Text(
+                                cuentaMarcada,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0A5C46)
+                            )
+                            Text(
+                                "Cuando el banco pida el número del destinatario, escríbelo igual.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF3A6B5C)
+                            )
+                        }
+                        TextButton(onClick = onOcultarCuenta) { Text("✕") }
+                    }
+                }
+            }
             if (bloqueado) {
                 Card(
                     shape = RoundedCornerShape(20.dp),
