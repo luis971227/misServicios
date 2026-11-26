@@ -63,6 +63,7 @@ object ComprasEtecsa {
                         hijos = listOf(
                             NodoCompra(
                                 id = "plan-45gb",
+                                emoji = "📶",
                                 titulo = "4.5 GB de datos",
                                 precio = "240.00 CUP",
                                 teclas = "1>4>1",
@@ -70,6 +71,7 @@ object ComprasEtecsa {
                             ),
                             NodoCompra(
                                 id = "plan-2gb",
+                                emoji = "📶",
                                 titulo = "2 GB + 15 min + 20 SMS",
                                 precio = "120.00 CUP",
                                 teclas = "1>4>2",
@@ -77,6 +79,7 @@ object ComprasEtecsa {
                             ),
                             NodoCompra(
                                 id = "plan-4gb",
+                                emoji = "📶",
                                 titulo = "4 GB + 35 min + 40 SMS",
                                 precio = "240.00 CUP",
                                 teclas = "1>4>3",
@@ -84,6 +87,7 @@ object ComprasEtecsa {
                             ),
                             NodoCompra(
                                 id = "plan-6gb",
+                                emoji = "📶",
                                 titulo = "6 GB + 60 min + 70 SMS",
                                 precio = "360.00 CUP",
                                 teclas = "1>4>4",
