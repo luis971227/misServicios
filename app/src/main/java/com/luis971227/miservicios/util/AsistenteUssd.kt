@@ -73,10 +73,14 @@ class AsistenteUssd : AccessibilityService() {
             AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
             valor
         )
-        val hecho = campo.performAction(
+        var hecho = campo.performAction(
             AccessibilityNodeInfo.ACTION_SET_TEXT,
             argumentos
-        ) || campo.setText(valor)
+        )
+        if (!hecho) {
+            campo.setText(valor)
+            hecho = campo.text?.toString() == valor
+        }
         if (hecho) {
             Toast.makeText(this, "🤖 Asistente rellenó el campo", Toast.LENGTH_SHORT).show()
         }
