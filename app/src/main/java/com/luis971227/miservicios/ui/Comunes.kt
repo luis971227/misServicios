@@ -1,6 +1,8 @@
 package com.luis971227.miservicios.ui
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
@@ -262,10 +264,47 @@ private fun MenuModulo(
                                 color = Color(0xFF3A6B5C)
                             )
                             Text(
-                                "Cuando el banco te pregunte, usa estos datos.",
+                                "Toca copiar y pega en el diálogo del banco (mantén pulsado el campo).",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFF3A6B5C)
                             )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                modifier = Modifier.padding(top = 2.dp)
+                            ) {
+                                val portapapeles = LocalContext.current
+                                TextButton(
+                                    onClick = {
+                                        val cm = portapapeles.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        cm.setPrimaryClip(ClipData.newPlainText("destino", resumen.first))
+                                    },
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)
+                                ) {
+                                    Text(
+                                        "📋 Copiar número",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0A5C46)
+                                    )
+                                }
+                                val monto = Regex("Monto: ([0-9.,]+)").find(resumen.second)?.groupValues?.getOrNull(1)
+                                if (monto != null) {
+                                    TextButton(
+                                        onClick = {
+                                            val cm = portapapeles.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                            cm.setPrimaryClip(ClipData.newPlainText("monto", monto))
+                                        },
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)
+                                    ) {
+                                        Text(
+                                            "💵 Copiar monto",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF0A5C46)
+                                        )
+                                    }
+                                }
+                            }
                         }
                         TextButton(onClick = onOcultarTransfer) { Text("✕") }
                     }
