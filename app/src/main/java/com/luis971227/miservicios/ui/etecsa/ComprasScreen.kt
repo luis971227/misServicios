@@ -18,8 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -37,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,13 +42,16 @@ import com.luis971227.miservicios.data.ComprasEtecsa
 import com.luis971227.miservicios.data.Modulos
 import com.luis971227.miservicios.data.NodoCompra
 
+private fun codigoDe(nodo: NodoCompra): String {
+    val teclas = nodo.teclas ?: return ComprasEtecsa.CODIGO
+    return "*133" + teclas.split(">").joinToString(separator = "*", prefix = "*") + "#"
+}
+
 @Composable
 fun PantallaCompras(inicioId: String, onVolver: () -> Unit, onMarcar: (String) -> Unit) {
     var ruta by remember(inicioId) {
         mutableStateOf(listOf(ComprasEtecsa.buscar(inicioId) ?: ComprasEtecsa.raiz))
     }
-    var seleccionado by remember { mutableStateOf<NodoCompra?>(null) }
-    var guiaActiva by remember { mutableStateOf<NodoCompra?>(null) }
     BackHandler(enabled = ruta.size > 1) { ruta = ruta.dropLast(1) }
 
     val actual = ruta.last()
@@ -74,52 +74,6 @@ fun PantallaCompras(inicioId: String, onVolver: () -> Unit, onMarcar: (String) -
                 .offset(y = (-24).dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (guiaActiva != null) {
-                val guia = guiaActiva!!
-                val teclasGuia = guia.teclas?.split(">")?.joinToString("  →  ") ?: ""
-                ElevatedCard(
-                    shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = Color(0xFFEAF3FF)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "📞 " + ComprasEtecsa.CODIGO + " marcado",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0B3D91),
-                                modifier = Modifier.weight(1f)
-                            )
-                            TextButton(onClick = { guiaActiva = null }) {
-                                Text("Ocultar", style = MaterialTheme.typography.labelMedium)
-                            }
-                        }
-                        Text(
-                            guia.titulo + (guia.precio?.let { " — " + it } ?: ""),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            teclasGuia,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF0B3D91)
-                        )
-                        Text(
-                            "Cuando ETECSA te pregunte, escribe el primer número y toca Enviar; repite con el siguiente. El último paso confirma la compra: revísalo bien antes de enviarlo.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
             if (ruta.size == 1) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -127,7 +81,7 @@ fun PantallaCompras(inicioId: String, onVolver: () -> Unit, onMarcar: (String) -
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "Toca una categoría para ver lo que puedes comprar. Al elegir un paquete la app marca *133# y te dice qué números responder.",
+                        "Toca un paquete y la app lo pide directo a ETECSA. Solo tendrás que confirmar en el aviso que aparece.",
                         modifier = Modifier.padding(14.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -142,63 +96,13 @@ fun PantallaCompras(inicioId: String, onVolver: () -> Unit, onMarcar: (String) -
                         when {
                             hijo.pendiente -> {}
                             hijo.hijos.isNotEmpty() -> ruta = ruta + hijo
-                            else -> seleccionado = hijo
+                            else -> onMarcar(codigoDe(hijo))
                         }
                     }
                 )
             }
             Spacer(Modifier.height(12.dp))
         }
-    }
-
-    seleccionado?.let { paquete ->
-        val teclasTexto = paquete.teclas?.split(">")?.joinToString("  →  ") ?: ""
-        AlertDialog(
-            onDismissRequest = { seleccionado = null },
-            title = { Text(paquete.emoji + " " + paquete.titulo) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (paquete.precio != null) {
-                        Text(
-                            "Precio: " + paquete.precio,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = acento
-                        )
-                    }
-                    Text(
-                        "La app va a marcar *133#. Cuando ETECSA te muestre el menú, responde con estos números:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        teclasTexto,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = acento
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        seleccionado = null
-                        guiaActiva = paquete
-                        onMarcar(ComprasEtecsa.CODIGO)
-                    },
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Text(
-                        "📞 Marcar " + ComprasEtecsa.CODIGO,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { seleccionado = null }) { Text("Cancelar") }
-            }
-        )
     }
 }
 
@@ -265,7 +169,7 @@ private fun CabeceraCompras(
                         )
                     } else {
                         Text(
-                            "Elige qué quieres comprar hoy",
+                            "Elige lo que quieres comprar",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.85f)
                         )
