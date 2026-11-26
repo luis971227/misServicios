@@ -48,7 +48,17 @@ class AsistenteUssd : AccessibilityService() {
         if (texto.isBlank()) return
         if (texto.contains("pin", ignoreCase = true) && !texto.contains("cuenta", ignoreCase = true)) return
 
-        val campo = buscarCampo(raiz, 0) ?: return
+        val campo = buscarCampo(raiz, 0)
+        val esConfirmacion = texto.contains("está seguro", true) ||
+            texto.contains("seguro que", true) ||
+            texto.contains("confirmar", true) ||
+            texto.contains("confirma", true)
+        if (campo == null) {
+            if (esConfirmacion) {
+                pulsarBoton()
+            }
+            return
+        }
         if (!campo.text.isNullOrBlank()) return
 
         val valor = when {
@@ -83,7 +93,30 @@ class AsistenteUssd : AccessibilityService() {
         }
         if (hecho) {
             Toast.makeText(this, "🤖 Asistente rellenó el campo", Toast.LENGTH_SHORT).show()
+            handler.postDelayed({ pulsarBoton() }, 400)
         }
+    }
+
+    private fun pulsarBoton() {
+        val raiz = rootInActiveWindow ?: return
+        val boton = buscarBoton(raiz, 0) ?: return
+        boton.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+    }
+
+    private fun buscarBoton(nodo: AccessibilityNodeInfo?, nivel: Int): AccessibilityNodeInfo? {
+        if (nodo == null || nivel > 25) return null
+        if (nodo.isClickable) {
+            val t = (nodo.text?.toString() ?: "") + " " + (nodo.contentDescription?.toString() ?: "")
+            val acepta = listOf(
+                "enviar", "envía", "ok", "aceptar", "acepta",
+                "sí", "confirmar", "continuar", "send"
+            ).any { t.trim().equals(it, true) || t.trim().startsWith(it, true) }
+            if (acepta) return nodo
+        }
+        for (i in 0 until nodo.childCount) {
+            buscarBoton(nodo.getChild(i), nivel + 1)?.let { return it }
+        }
+        return null
     }
 
     private fun recolectar(nodo: AccessibilityNodeInfo?, destino: StringBuilder, nivel: Int) {
