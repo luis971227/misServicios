@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -64,6 +66,7 @@ fun PantallaTransferir(
     var nombre by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var monto by remember { mutableStateOf("") }
+    var moneda by remember { mutableStateOf("CUP") }
     var concepto by remember { mutableStateOf("") }
     var guardarNueva by remember { mutableStateOf(true) }
     var mensaje by remember { mutableStateOf<String?>(null) }
@@ -288,6 +291,30 @@ fun PantallaTransferir(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            "Moneda:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        listOf("CUP", "MLC").forEach { divisa ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (moneda == divisa) Color(Modulos.tmv.colorB.toInt()) else Color(0xFFEDEFF3),
+                                modifier = Modifier.clickable { moneda = divisa }
+                            ) {
+                                Text(
+                                    divisa,
+                                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (moneda == divisa) Color.White else Color(0xFF444B54)
+                                )
+                            }
+                        }
+                    }
                     OutlinedTextField(
                         value = concepto,
                         onValueChange = { concepto = it },
@@ -322,10 +349,12 @@ fun PantallaTransferir(
                         .putString("asistente_destino", numero)
                         .putString("asistente_telefono", telefono.trim())
                         .putString("asistente_monto", monto.trim())
+                        .putString("asistente_moneda", moneda)
                         .putString("asistente_concepto", concepto.trim())
                         .putLong("asistente_ts", System.currentTimeMillis())
                         .apply()
-                    val partes = mutableListOf("Monto: " + monto.trim())
+                    AsistenteUssd.instancia?.mostrarCortina()
+                    val partes = mutableListOf("Monto: " + monto.trim() + " " + moneda)
                     if (telefono.isNotBlank()) partes.add("Teléfono: " + telefono.trim())
                     if (concepto.isNotBlank()) partes.add("Concepto: " + concepto.trim())
                     onTransferir(numero, partes.joinToString(" · "))
@@ -343,6 +372,43 @@ fun PantallaTransferir(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+            }
+
+            if (!Settings.canDrawOverlays(context)) {
+                ElevatedCard(
+                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            "🖼️ Cortina de transferencia",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Permite que misServicios aparezca encima y verás una pantalla de carga en vez de los parpadeos de los diálogos del banco.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(
+                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        Uri.parse("package:com.luis971227.miservicios")
+                                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("⚙️ Permitir aparecer encima")
+                        }
+                    }
+                }
             }
 
             if (!AsistenteUssd.estaActivo(context)) {
