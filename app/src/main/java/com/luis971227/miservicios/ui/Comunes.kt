@@ -10,18 +10,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -29,6 +31,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,9 +46,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.luis971227.miservicios.abrirEnlace
@@ -58,6 +61,8 @@ import com.luis971227.miservicios.marcarCodigo
 fun PantallaModulo(modulo: ModuloApp) {
     val context = LocalContext.current
     var abierta by remember(modulo.id) { mutableStateOf<OpcionMenu?>(null) }
+    var entradaPara by remember { mutableStateOf<OpcionMenu?>(null) }
+    var textoEntrada by remember { mutableStateOf("") }
     BackHandler(enabled = abierta != null) { abierta = null }
 
     var codigoPendiente by remember { mutableStateOf<String?>(null) }
@@ -80,16 +85,60 @@ fun PantallaModulo(modulo: ModuloApp) {
     if (opcion == null) {
         MenuModulo(
             modulo = modulo,
-            onMarcar = { marcar(it) },
-            onAbrirOpcion = { abierta = it }
+            onToque = { tocada ->
+                when {
+                    tocada.pendiente -> abierta = tocada
+                    tocada.entrada != null -> {
+                        entradaPara = tocada
+                        textoEntrada = ""
+                    }
+                    tocada.codigos.isNotEmpty() -> marcar(tocada.codigos.first())
+                    else -> abierta = tocada
+                }
+            },
+            onVerPasos = { abierta = it }
         )
     } else {
         DetalleOpcion(
             modulo = modulo,
             opcion = opcion,
             onMarcar = { marcar(it) },
+            onPedirEntrada = { opcionEntrada ->
+                entradaPara = opcionEntrada
+                textoEntrada = ""
+            },
             onAbrir = { abrirEnlace(context, it) },
             onVolver = { abierta = null }
+        )
+    }
+
+    entradaPara?.let { opcionEntrada ->
+        AlertDialog(
+            onDismissRequest = { entradaPara = null },
+            title = { Text(opcionEntrada.emoji + " " + opcionEntrada.titulo) },
+            text = {
+                OutlinedTextField(
+                    value = textoEntrada,
+                    onValueChange = { textoEntrada = it },
+                    label = { Text(opcionEntrada.entrada ?: "Valor") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = textoEntrada.isNotBlank(),
+                    onClick = {
+                        val codigo = (opcionEntrada.plantilla ?: "{0}").replace("{0}", textoEntrada.trim())
+                        entradaPara = null
+                        marcar(codigo)
+                    }
+                ) { Text("Marcar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { entradaPara = null }) { Text("Cancelar") }
+            }
         )
     }
 }
@@ -97,8 +146,8 @@ fun PantallaModulo(modulo: ModuloApp) {
 @Composable
 private fun MenuModulo(
     modulo: ModuloApp,
-    onMarcar: (String) -> Unit,
-    onAbrirOpcion: (OpcionMenu) -> Unit
+    onToque: (OpcionMenu) -> Unit,
+    onVerPasos: (OpcionMenu) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -114,12 +163,7 @@ private fun MenuModulo(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             modulo.opciones.forEach { opcion ->
-                val directa = !opcion.pendiente && opcion.codigo != null
-                TarjetaOpcion(
-                    opcion = opcion,
-                    onMarcarDirecto = { opcion.codigo?.let { onMarcar(it) } },
-                    onAbrirDetalle = { onAbrirOpcion(opcion) }
-                )
+                TarjetaOpcion(opcion = opcion, onToque = onToque, onVerPasos = onVerPasos)
             }
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -198,15 +242,15 @@ private fun CabeceraModulo(modulo: ModuloApp) {
 }
 
 @Composable
-private fun TarjetaOpcion(opcion: OpcionMenu, onMarcarDirecto: () -> Unit, onAbrirDetalle: () -> Unit) {
+private fun TarjetaOpcion(opcion: OpcionMenu, onToque: (OpcionMenu) -> Unit, onVerPasos: (OpcionMenu) -> Unit) {
     val acento = Color(opcion.color.toInt())
-    val directa = !opcion.pendiente && opcion.codigo != null
+    val directa = !opcion.pendiente && opcion.codigos.isNotEmpty() && opcion.entrada == null
     ElevatedCard(
         shape = RoundedCornerShape(22.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { if (directa) onMarcarDirecto() else onAbrirDetalle() }
+            .clickable { onToque(opcion) }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -232,9 +276,18 @@ private fun TarjetaOpcion(opcion: OpcionMenu, onMarcarDirecto: () -> Unit, onAbr
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (opcion.codigo != null) {
+                if (opcion.codigos.isNotEmpty()) {
                     Text(
-                        opcion.codigo,
+                        opcion.codigos.joinToString("  ·  "),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        color = acento
+                    )
+                }
+                if (opcion.plantilla != null) {
+                    Text(
+                        opcion.plantilla.replace("{0}", "CÓDIGO"),
                         style = MaterialTheme.typography.labelLarge,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
@@ -249,7 +302,7 @@ private fun TarjetaOpcion(opcion: OpcionMenu, onMarcarDirecto: () -> Unit, onAbr
                         "ℹ️ Ver pasos",
                         style = MaterialTheme.typography.labelMedium,
                         color = acento,
-                        modifier = Modifier.clickable { onAbrirDetalle() }
+                        modifier = Modifier.clickable { onVerPasos(opcion) }
                     )
                 }
             }
@@ -306,6 +359,7 @@ private fun DetalleOpcion(
     modulo: ModuloApp,
     opcion: OpcionMenu,
     onMarcar: (String) -> Unit,
+    onPedirEntrada: (OpcionMenu) -> Unit,
     onAbrir: (String) -> Unit,
     onVolver: () -> Unit
 ) {
@@ -394,7 +448,47 @@ private fun DetalleOpcion(
                 }
             }
 
-            opcion.codigo?.let { codigo ->
+            if (opcion.entrada != null && opcion.plantilla != null) {
+                ElevatedCard(
+                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            opcion.entrada.uppercase(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp
+                        )
+                        Text(
+                            opcion.plantilla.replace("{0}", "····"),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = acento
+                        )
+                        Button(
+                            onClick = { onPedirEntrada(opcion) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = acento),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                "⌨️ Escribir código y marcar",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (opcion.entrada == null && opcion.codigos.isNotEmpty()) {
                 ElevatedCard(
                     shape = RoundedCornerShape(22.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -405,37 +499,39 @@ private fun DetalleOpcion(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            "CÓDIGO USSD",
+                            if (opcion.codigos.size > 1) "CÓDIGOS" else "CÓDIGO USSD",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 2.sp
                         )
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = acento.copy(alpha = 0.1f)
-                        ) {
-                            Text(
-                                codigo,
-                                modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = acento
-                            )
-                        }
-                        Button(
-                            onClick = { onMarcar(codigo) },
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = acento),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                "📲 Marcar $codigo",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                        opcion.codigos.forEach { codigo ->
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = acento.copy(alpha = 0.1f)
+                            ) {
+                                Text(
+                                    codigo,
+                                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = acento
+                                )
+                            }
+                            Button(
+                                onClick = { onMarcar(codigo) },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = acento),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    "📲 Marcar $codigo",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }

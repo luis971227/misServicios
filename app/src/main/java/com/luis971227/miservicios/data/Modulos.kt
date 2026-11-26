@@ -15,11 +15,13 @@ data class OpcionMenu(
     val titulo: String,
     val emoji: String,
     val descripcion: String = "",
-    val codigo: String? = null,
+    val codigos: List<String> = emptyList(),
     val enlace: String? = null,
     val pasos: List<String> = emptyList(),
     val pendiente: Boolean = false,
-    val color: Long = 0xFF64748B
+    val color: Long = 0xFF64748B,
+    val entrada: String? = null,
+    val plantilla: String? = null
 )
 
 object Modulos {
@@ -28,47 +30,106 @@ object Modulos {
         id = "etecsa",
         titulo = "ETECSA",
         emoji = "📱",
-        presentacion = "Gestión de tu línea: paquetes, saldo y guía de opciones.",
+        presentacion = "Consultas, paquetes y recargas de tu línea con un toque.",
         colorA = 0xFF0B3D91,
         colorB = 0xFF2E7DFF,
         opciones = listOf(
             OpcionMenu(
-                id = "paquetes",
-                titulo = "Comprar paquetes",
-                emoji = "📦",
-                descripcion = "Datos, voz y SMS.",
-                pendiente = true,
+                id = "comprar-paquetes",
+                titulo = "Comprar paquetes y planes",
+                emoji = "🛒",
+                descripcion = "Compra planes de datos, voz o SMS con el menú interactivo.",
+                codigos = listOf("*133#"),
+                pasos = listOf(
+                    "Marca *133#",
+                    "Sigue las instrucciones del menú",
+                    "Elige el plan de datos, voz o SMS que quieras"
+                ),
                 color = 0xFF6366F1
             ),
             OpcionMenu(
-                id = "guia",
-                titulo = "Guía de opciones",
-                emoji = "📖",
-                descripcion = "Guía paso a paso del menú de tu línea.",
-                pendiente = true,
-                color = 0xFF8B5CF6
-            ),
-            OpcionMenu(
-                id = "saldo",
-                titulo = "Consultar saldo",
+                id = "saldo-integral",
+                titulo = "Consultar saldo integral",
                 emoji = "💰",
-                codigo = "*222#",
-                pasos = listOf(
-                    "Marca el código desde la app de Teléfono",
-                    "En unos segundos aparece el saldo en pantalla"
-                ),
+                descripcion = "Saldo principal, voz, SMS, datos y vencimiento de la línea.",
+                codigos = listOf("*222#"),
+                pasos = listOf("Marca *222#", "En unos segundos aparece el resumen en pantalla"),
                 color = 0xFFF59E0B
             ),
             OpcionMenu(
-                id = "bonos",
-                titulo = "Consultar bonos y datos",
-                emoji = "📊",
-                codigo = "*222*266#",
-                pasos = listOf(
-                    "Marca el código desde la app de Teléfono",
-                    "Elige la opción de consulta en el menú"
-                ),
+                id = "plan-datos",
+                titulo = "Consultar plan de datos",
+                emoji = "📶",
+                descripcion = "Datos restantes y fecha de validez.",
+                codigos = listOf("*222*328#"),
+                pasos = listOf("Marca *222*328#", "Verás los datos disponibles y su validez"),
+                color = 0xFF0EA5E9
+            ),
+            OpcionMenu(
+                id = "plan-voz",
+                titulo = "Consultar plan de voz",
+                emoji = "🗣️",
+                descripcion = "Minutos de voz restantes.",
+                codigos = listOf("*222*869#"),
+                pasos = listOf("Marca *222*869#", "Verás los minutos disponibles"),
                 color = 0xFF10B981
+            ),
+            OpcionMenu(
+                id = "plan-sms",
+                titulo = "Consultar plan de SMS",
+                emoji = "✉️",
+                descripcion = "SMS restantes.",
+                codigos = listOf("*222*767#"),
+                pasos = listOf("Marca *222*767#", "Verás los SMS disponibles"),
+                color = 0xFF8B5CF6
+            ),
+            OpcionMenu(
+                id = "bonos-usd",
+                titulo = "Bonos y planes en USD",
+                emoji = "💵",
+                descripcion = "Bonificaciones y planes en moneda libremente convertible.",
+                codigos = listOf("*222*266#"),
+                pasos = listOf("Marca *222*266#", "Verás tus bonificaciones y planes en USD"),
+                color = 0xFF059669
+            ),
+            OpcionMenu(
+                id = "estado-recarga",
+                titulo = "Estado de recarga",
+                emoji = "🔄",
+                descripcion = "Límite de recarga restante o estado de la recarga nacional.",
+                codigos = listOf("*222*732#"),
+                pasos = listOf("Marca *222*732#", "Verás el estado de tu recarga"),
+                color = 0xFF14B8A6
+            ),
+            OpcionMenu(
+                id = "recarga-tarjeta",
+                titulo = "Recarga rápida con tarjeta",
+                emoji = "🎫",
+                descripcion = "Recarga con el código impreso en tu tarjeta.",
+                plantilla = "*662*{0}#",
+                entrada = "Código de la tarjeta de recarga",
+                pasos = listOf(
+                    "Toca la opción y escribe el código de la tarjeta",
+                    "La app marca *662*código# automáticamente"
+                ),
+                color = 0xFFEF6C00
+            ),
+            OpcionMenu(
+                id = "atencion-cliente",
+                titulo = "Servicio al cliente",
+                emoji = "☎️",
+                descripcion = "Hablar con atención al cliente de ETECSA.",
+                codigos = listOf("*2266", "164"),
+                pasos = listOf("Marca *2266 o llama al 164"),
+                color = 0xFFDC2626
+            ),
+            OpcionMenu(
+                id = "guia",
+                titulo = "Guía completa de opciones",
+                emoji = "📖",
+                descripcion = "Guía paso a paso con todas las opciones del menú.",
+                pendiente = true,
+                color = 0xFF8B5CF6
             )
         )
     )
@@ -93,9 +154,9 @@ object Modulos {
                 id = "menu-ussd",
                 titulo = "Menú USSD *99#",
                 emoji = "📞",
-                codigo = "*99#",
+                codigos = listOf("*99#"),
                 pasos = listOf(
-                    "Marca el código desde la app de Teléfono",
+                    "Marca *99#",
                     "Navega por el menú con los números de opción"
                 ),
                 color = 0xFF059669
@@ -114,5 +175,5 @@ object Modulos {
         )
     )
 
-    val nota = "Los códigos son informativos y pueden cambiar. Las opciones marcadas como «Pendiente» se completarán con las guías que se vayan pasando."
+    val nota = "La mayoría de los códigos son gratuitos y no necesitan internet. Si alguno no funciona, consulta www.etecsa.cu o llama al servicio al cliente."
 }
