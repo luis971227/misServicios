@@ -25,14 +25,21 @@ jobs:
       - name: Firma fija (keystore debug del repo)
         run: |
           if [ -f .github/debug.keystore.b64 ]; then
+            base64 -d .github/debug.keystore.b64 > "$GITHUB_WORKSPACE/.github/fixed.keystore"
+            echo "MISERVICIOS_KEYSTORE=.github/fixed.keystore" >> "$GITHUB_ENV"
             mkdir -p "$HOME/.android"
-            base64 -d .github/debug.keystore.b64 > "$HOME/.android/debug.keystore"
+            cp "$GITHUB_WORKSPACE/.github/fixed.keystore" "$HOME/.android/debug.keystore"
           else
             echo "Sin keystore fijo: se genera uno temporal"
           fi
 
       - name: Compilar APK debug
         run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verificar firma del APK
+        run: |
+          BT=$(ls "$ANDROID_HOME/build-tools" | tail -1)
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" || true
 
       - name: Publicar artefacto APK
         uses: actions/upload-artifact@v4

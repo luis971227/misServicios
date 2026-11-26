@@ -49,6 +49,7 @@ import com.luis971227.miservicios.data.NodoCompra
 fun PantallaCompras(onVolver: () -> Unit, onMarcar: (String) -> Unit) {
     var ruta by remember { mutableStateOf(listOf(ComprasEtecsa.raiz)) }
     var seleccionado by remember { mutableStateOf<NodoCompra?>(null) }
+    var guiaActiva by remember { mutableStateOf<NodoCompra?>(null) }
     BackHandler(enabled = ruta.size > 1) { ruta = ruta.dropLast(1) }
 
     val actual = ruta.last()
@@ -71,6 +72,52 @@ fun PantallaCompras(onVolver: () -> Unit, onMarcar: (String) -> Unit) {
                 .offset(y = (-24).dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (guiaActiva != null) {
+                val guia = guiaActiva!!
+                val teclasGuia = guia.teclas?.split(">")?.joinToString("  →  ") ?: ""
+                ElevatedCard(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = Color(0xFFEAF3FF)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "📞 " + ComprasEtecsa.CODIGO + " marcado",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0B3D91),
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = { guiaActiva = null }) {
+                                Text("Ocultar", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                        Text(
+                            guia.titulo + (guia.precio?.let { " — " + it } ?: ""),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            teclasGuia,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF0B3D91)
+                        )
+                        Text(
+                            "Cuando ETECSA te pregunte, escribe el primer número y toca Enviar; repite con el siguiente. El último paso confirma la compra: revísalo bien antes de enviarlo.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
             if (ruta.size == 1) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -134,6 +181,7 @@ fun PantallaCompras(onVolver: () -> Unit, onMarcar: (String) -> Unit) {
                 Button(
                     onClick = {
                         seleccionado = null
+                        guiaActiva = paquete
                         onMarcar(ComprasEtecsa.CODIGO)
                     },
                     shape = RoundedCornerShape(14.dp)
