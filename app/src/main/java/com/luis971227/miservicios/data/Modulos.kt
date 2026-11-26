@@ -190,8 +190,6 @@ object Modulos {
                 emoji = "💸",
                 descripcion = "Elige una cuenta guardada, escanea un QR o escribe la tarjeta.",
                 pantalla = "transferir",
-                codigos = listOf("*444*45#"),
-                ocultarCodigos = true,
                 color = 0xFF059669
             ),
             OpcionMenu(
