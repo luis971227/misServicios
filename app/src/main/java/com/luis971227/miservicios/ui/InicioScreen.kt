@@ -25,8 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.luis971227.miservicios.data.Datos
 import com.luis971227.miservicios.data.Gasto
+import com.luis971227.miservicios.data.NOTA
 import com.luis971227.miservicios.data.RepositorioGastos
 import com.luis971227.miservicios.marcarCodigo
 import java.text.NumberFormat
@@ -130,7 +130,7 @@ fun InicioScreen(irA: (String) -> Unit) {
 
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Text(
-                Datos.NOTA,
+                NOTA,
                 modifier = Modifier.padding(14.dp),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
