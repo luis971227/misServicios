@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -64,6 +66,7 @@ import com.luis971227.miservicios.marcarCodigo
 import com.luis971227.miservicios.ui.etecsa.PantallaCompras
 import com.luis971227.miservicios.ui.transfermovil.PantallaPerfil
 import com.luis971227.miservicios.ui.transfermovil.PantallaTransferir
+import com.luis971227.miservicios.util.AsistenteUssd
 
 @Composable
 fun PantallaModulo(modulo: ModuloApp) {
@@ -133,7 +136,10 @@ fun PantallaModulo(modulo: ModuloApp) {
             opciones = opcionesVisibles,
             bloqueado = requiereAutenticacion && !autenticado,
             transferResumen = transferResumen,
-            onOcultarTransfer = { transferResumen = null },
+            onOcultarTransfer = {
+                transferResumen = null
+                prefs.edit().putBoolean("asistente_activo", false).apply()
+            },
             onToque = { tocada ->
                 when {
                     tocada.pantalla == "transferir" -> transferAbierta = true
@@ -323,6 +329,33 @@ private fun MenuModulo(
                                             color = Color(0xFF0A5C46)
                                         )
                                     }
+                                }
+                            }
+                            val asistenteListo = remember { AsistenteUssd.estaActivo(portapapeles) }
+                            Text(
+                                if (asistenteListo)
+                                    "🤖 Asistente activo: rellena los campos del banco por ti. Revisa y dale Enviar."
+                                else
+                                    "🤖 Activa el asistente y la app rellena los campos del banco por ti.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF3A6B5C)
+                            )
+                            if (!asistenteListo) {
+                                TextButton(
+                                    onClick = {
+                                        portapapeles.startActivity(
+                                            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    },
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)
+                                ) {
+                                    Text(
+                                        "⚙️ Activar asistente",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0A5C46)
+                                    )
                                 }
                             }
                         }

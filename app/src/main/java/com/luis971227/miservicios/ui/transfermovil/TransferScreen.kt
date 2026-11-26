@@ -40,6 +40,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,6 +51,7 @@ import com.luis971227.miservicios.data.CuentaGuardada
 import com.luis971227.miservicios.data.Cuentas
 import com.luis971227.miservicios.data.Modulos
 import com.luis971227.miservicios.data.Perfil
+import com.luis971227.miservicios.util.AsistenteUssd
 
 @Composable
 fun PantallaTransferir(
@@ -313,6 +316,15 @@ fun PantallaTransferir(
                     if (guardarNueva && cuentas.none { it.numero == numero }) {
                         Cuentas.guardar(context, CuentaGuardada(nombre, numero, telefono.trim()))
                     }
+                    context.getSharedPreferences("miservicios", android.content.Context.MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("asistente_activo", true)
+                        .putString("asistente_destino", numero)
+                        .putString("asistente_telefono", telefono.trim())
+                        .putString("asistente_monto", monto.trim())
+                        .putString("asistente_concepto", concepto.trim())
+                        .putLong("asistente_ts", System.currentTimeMillis())
+                        .apply()
                     val partes = mutableListOf("Monto: " + monto.trim())
                     if (telefono.isNotBlank()) partes.add("Teléfono: " + telefono.trim())
                     if (concepto.isNotBlank()) partes.add("Concepto: " + concepto.trim())
@@ -331,6 +343,41 @@ fun PantallaTransferir(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+            }
+
+            if (!AsistenteUssd.estaActivo(context)) {
+                ElevatedCard(
+                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            "🤖 Asistente de diálogos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Actívalo una sola vez y misServicios escribirá por ti la tarjeta, el monto y el mensaje en los diálogos del banco. Tu PIN siempre lo pones tú.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("⚙️ Activar en Ajustes de accesibilidad")
+                        }
+                    }
+                }
             }
 
             Spacer(Modifier.height(16.dp))
