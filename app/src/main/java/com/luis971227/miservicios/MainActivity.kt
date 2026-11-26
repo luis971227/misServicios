@@ -110,8 +110,9 @@ fun App() {
                     descargando -> {}
                     archivoListo != null -> {
                         TextButton(onClick = {
-                            if (Actualizaciones.puedeInstalar(context)) {
-                                Actualizaciones.instalar(context, archivoListo)
+                            val listo = archivoListo
+                            if (listo != null && Actualizaciones.puedeInstalar(context)) {
+                                Actualizaciones.instalar(context, listo)
                                 archivoListo = null
                                 actualizacion = null
                             } else {
