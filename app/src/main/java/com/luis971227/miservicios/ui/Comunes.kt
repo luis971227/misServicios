@@ -1,6 +1,7 @@
 package com.luis971227.miservicios.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -69,6 +70,20 @@ fun PantallaModulo(modulo: ModuloApp) {
     var comprasInicio by remember(modulo.id) { mutableStateOf("raiz") }
     BackHandler(enabled = abierta != null && !comprasAbierta) { abierta = null }
 
+    val prefs = context.getSharedPreferences("miservicios", Context.MODE_PRIVATE)
+    var autenticado by remember(modulo.id) { mutableStateOf(prefs.getBoolean("autenticado_" + modulo.id, false)) }
+    fun guardarAutenticado(valor: Boolean) {
+        prefs.edit().putBoolean("autenticado_" + modulo.id, valor).apply()
+        autenticado = valor
+        abierta = null
+    }
+    val requiereAutenticacion = modulo.id == "tmv"
+    val opcionesVisibles = if (requiereAutenticacion && !autenticado) {
+        modulo.opciones.filter { it.id == "autenticar" }
+    } else {
+        modulo.opciones
+    }
+
     var codigoPendiente by remember { mutableStateOf<String?>(null) }
     val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
         codigoPendiente?.let { marcarCodigo(context, it, concedido) }
@@ -95,6 +110,8 @@ fun PantallaModulo(modulo: ModuloApp) {
     } else if (opcion == null) {
         MenuModulo(
             modulo = modulo,
+            opciones = opcionesVisibles,
+            bloqueado = requiereAutenticacion && !autenticado,
             onToque = { tocada ->
                 when {
                     tocada.pantalla == "compras" -> {
@@ -106,7 +123,14 @@ fun PantallaModulo(modulo: ModuloApp) {
                         entradaPara = tocada
                         textoEntrada = ""
                     }
-                    tocada.codigos.isNotEmpty() -> marcar(tocada.codigos.first())
+                    tocada.codigos.size > 1 -> abierta = tocada
+                    tocada.codigos.isNotEmpty() -> {
+                        marcar(tocada.codigos.first())
+                        if (requiereAutenticacion) {
+                            if (tocada.id == "autenticar") guardarAutenticado(true)
+                            if (tocada.id == "cerrar-sesion") guardarAutenticado(false)
+                        }
+                    }
                     else -> abierta = tocada
                 }
             },
@@ -116,7 +140,10 @@ fun PantallaModulo(modulo: ModuloApp) {
         DetalleOpcion(
             modulo = modulo,
             opcion = opcion,
-            onMarcar = { marcar(it) },
+            onMarcar = { codigo ->
+                marcar(codigo)
+                if (requiereAutenticacion && opcion.id == "autenticar") guardarAutenticado(true)
+            },
             onPedirEntrada = { opcionEntrada ->
                 entradaPara = opcionEntrada
                 textoEntrada = ""
@@ -160,6 +187,8 @@ fun PantallaModulo(modulo: ModuloApp) {
 @Composable
 private fun MenuModulo(
     modulo: ModuloApp,
+    opciones: List<OpcionMenu>,
+    bloqueado: Boolean,
     onToque: (OpcionMenu) -> Unit,
     onVerPasos: (OpcionMenu) -> Unit
 ) {
@@ -176,7 +205,31 @@ private fun MenuModulo(
                 .offset(y = (-24).dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            modulo.opciones.forEach { opcion ->
+            if (bloqueado) {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8EE)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            "🔒 Sesión bloqueada",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF9A6B0F)
+                        )
+                        Text(
+                            "Autentica tu tarjeta para desbloquear todas las operaciones.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF7A5A22)
+                        )
+                    }
+                }
+            }
+            opciones.forEach { opcion ->
                 TarjetaOpcion(opcion = opcion, onToque = onToque, onVerPasos = onVerPasos)
             }
             Surface(
@@ -290,7 +343,7 @@ private fun TarjetaOpcion(opcion: OpcionMenu, onToque: (OpcionMenu) -> Unit, onV
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (opcion.codigos.isNotEmpty()) {
+                if (opcion.codigos.isNotEmpty() && !opcion.ocultarCodigos) {
                     Text(
                         opcion.codigos.joinToString("  ·  "),
                         style = MaterialTheme.typography.labelLarge,
@@ -299,7 +352,7 @@ private fun TarjetaOpcion(opcion: OpcionMenu, onToque: (OpcionMenu) -> Unit, onV
                         color = acento
                     )
                 }
-                if (opcion.plantilla != null) {
+                if (opcion.plantilla != null && !opcion.ocultarCodigos) {
                     Text(
                         opcion.plantilla.replace("{0}", "CÓDIGO"),
                         style = MaterialTheme.typography.labelLarge,
@@ -478,13 +531,15 @@ private fun DetalleOpcion(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 2.sp
                         )
-                        Text(
-                            opcion.plantilla.replace("{0}", "····"),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = acento
-                        )
+                        if (!opcion.ocultarCodigos) {
+                            Text(
+                                opcion.plantilla.replace("{0}", "····"),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = acento
+                            )
+                        }
                         Button(
                             onClick = { onPedirEntrada(opcion) },
                             shape = RoundedCornerShape(14.dp),
@@ -512,39 +567,58 @@ private fun DetalleOpcion(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            if (opcion.codigos.size > 1) "CÓDIGOS" else "CÓDIGO USSD",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp
-                        )
-                        opcion.codigos.forEach { codigo ->
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = acento.copy(alpha = 0.1f)
-                            ) {
-                                Text(
-                                    codigo,
-                                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = acento
-                                )
+                        if (opcion.ocultarCodigos) {
+                            opcion.codigos.forEachIndexed { i, codigo ->
+                                Button(
+                                    onClick = { onMarcar(codigo) },
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = acento),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    val etiqueta = opcion.etiquetas.getOrNull(i)
+                                    Text(
+                                        if (etiqueta != null) "Marcar con " + etiqueta else "Marcar ahora",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
                             }
-                            Button(
-                                onClick = { onMarcar(codigo) },
-                                shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = acento),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    "📲 Marcar $codigo",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
+                        } else {
+                            Text(
+                                if (opcion.codigos.size > 1) "C\u00d3DIGOS" else "C\u00d3DIGO USSD",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 2.sp
+                            )
+                            opcion.codigos.forEach { codigo ->
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = acento.copy(alpha = 0.1f)
+                                ) {
+                                    Text(
+                                        codigo,
+                                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = acento
+                                    )
+                                }
+                                Button(
+                                    onClick = { onMarcar(codigo) },
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = acento),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        "\ud83d\udcf2 Marcar $codigo",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
                             }
                         }
                     }

@@ -24,7 +24,9 @@ data class OpcionMenu(
     val entrada: String? = null,
     val plantilla: String? = null,
     val pantalla: String? = null,
-    val inicio: String? = null
+    val inicio: String? = null,
+    val ocultarCodigos: Boolean = false,
+    val etiquetas: List<String> = emptyList()
 )
 
 object Modulos {
@@ -155,12 +157,14 @@ object Modulos {
                 id = "autenticar",
                 titulo = "Autenticar tarjeta",
                 emoji = "🔑",
-                descripcion = "BANMET: *444*40*03# · BANDEC: *444*40*02#. Hazlo primero; sin autenticar no funcionan las demás operaciones.",
+                descripcion = "Autentica tu tarjeta de BANMET o BANDEC. Es obligatorio antes de usar las demás operaciones.",
                 codigos = listOf("*444*40*03#", "*444*40*02#"),
+                etiquetas = listOf("BANMET", "BANDEC"),
+                ocultarCodigos = true,
                 pasos = listOf(
                     "Identifica tu banco: BANMET o BANDEC",
-                    "Marca el código de autenticación correspondiente",
-                    "Sigue las indicaciones para completar la sesión"
+                    "Toca el botón de tu banco y completa la autenticación",
+                    "Cuando termines, se desbloquean las demás opciones"
                 ),
                 color = 0xFFB45309
             ),
@@ -170,6 +174,7 @@ object Modulos {
                 emoji = "💸",
                 descripcion = "Enviar dinero entre cuentas (BANMET/BANDEC).",
                 codigos = listOf("*444*45#"),
+                ocultarCodigos = true,
                 color = 0xFF059669
             ),
             OpcionMenu(
@@ -178,6 +183,7 @@ object Modulos {
                 emoji = "⚡",
                 descripcion = "Pago de la factura eléctrica.",
                 codigos = listOf("*444*41#"),
+                ocultarCodigos = true,
                 color = 0xFFF59E0B
             ),
             OpcionMenu(
@@ -186,6 +192,7 @@ object Modulos {
                 emoji = "📞",
                 descripcion = "Pago del servicio telefónico.",
                 codigos = listOf("*444*42#"),
+                ocultarCodigos = true,
                 color = 0xFF0EA5E9
             ),
             OpcionMenu(
@@ -194,6 +201,7 @@ object Modulos {
                 emoji = "🧾",
                 descripcion = "Pago de impuestos y tributos.",
                 codigos = listOf("*444*43#"),
+                ocultarCodigos = true,
                 color = 0xFFDC2626
             ),
             OpcionMenu(
@@ -202,6 +210,7 @@ object Modulos {
                 emoji = "📲",
                 descripcion = "Recargar el saldo de tu propio número.",
                 codigos = listOf("*444*54#"),
+                ocultarCodigos = true,
                 color = 0xFF10B981
             ),
             OpcionMenu(
@@ -210,6 +219,7 @@ object Modulos {
                 emoji = "🌐",
                 descripcion = "Recargar una cuenta de correo Nauta.",
                 codigos = listOf("*444*59#"),
+                ocultarCodigos = true,
                 color = 0xFF6366F1
             ),
             OpcionMenu(
@@ -218,6 +228,7 @@ object Modulos {
                 emoji = "✉️",
                 descripcion = "Enviar o cobrar un giro postal.",
                 codigos = listOf("*444*64#"),
+                ocultarCodigos = true,
                 color = 0xFF8B5CF6
             ),
             OpcionMenu(
@@ -226,6 +237,7 @@ object Modulos {
                 emoji = "💰",
                 descripcion = "Saldo disponible de tus cuentas.",
                 codigos = listOf("*444*46#"),
+                ocultarCodigos = true,
                 color = 0xFFF59E0B
             ),
             OpcionMenu(
@@ -234,6 +246,7 @@ object Modulos {
                 emoji = "🧮",
                 descripcion = "Movimientos recientes de tu tarjeta.",
                 codigos = listOf("*444*48#"),
+                ocultarCodigos = true,
                 color = 0xFF0EA5E9
             ),
             OpcionMenu(
@@ -242,6 +255,7 @@ object Modulos {
                 emoji = "📏",
                 descripcion = "Límite de operaciones vigente.",
                 codigos = listOf("*444*62#"),
+                ocultarCodigos = true,
                 color = 0xFF10B981
             ),
             OpcionMenu(
@@ -250,14 +264,16 @@ object Modulos {
                 emoji = "🗂️",
                 descripcion = "Listado de tus cuentas asociadas.",
                 codigos = listOf("*444*58#"),
+                ocultarCodigos = true,
                 color = 0xFF6366F1
             ),
             OpcionMenu(
                 id = "cerrar-sesion",
                 titulo = "Cerrar sesión",
                 emoji = "🚪",
-                descripcion = "Termina la sesión de Transfermóvil.",
+                descripcion = "Termina la sesión y vuelve a bloquear las opciones.",
                 codigos = listOf("*444*70#"),
+                ocultarCodigos = true,
                 color = 0xFF64748B
             ),
             OpcionMenu(
@@ -266,6 +282,7 @@ object Modulos {
                 emoji = "🔒",
                 descripcion = "Cambiar el PIN de Transfermóvil.",
                 codigos = listOf("*444*69#"),
+                ocultarCodigos = true,
                 color = 0xFF7C3AED
             ),
             OpcionMenu(
@@ -274,6 +291,7 @@ object Modulos {
                 emoji = "⚖️",
                 descripcion = "Modificar el límite de tus operaciones.",
                 codigos = listOf("*444*61#"),
+                ocultarCodigos = true,
                 color = 0xFFDB2777
             ),
             OpcionMenu(
@@ -283,6 +301,7 @@ object Modulos {
                 descripcion = "Registrar tu tarjeta de BANDEC.",
                 plantilla = "*444*49*02*{0}#",
                 entrada = "Número de tarjeta",
+                ocultarCodigos = true,
                 color = 0xFF059669
             ),
             OpcionMenu(
@@ -292,6 +311,7 @@ object Modulos {
                 descripcion = "Registrar tu tarjeta de BANMET.",
                 plantilla = "*444*49*03*{0}#",
                 entrada = "Número de tarjeta",
+                ocultarCodigos = true,
                 color = 0xFF0F766E
             ),
             OpcionMenu(

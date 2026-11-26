@@ -74,20 +74,6 @@ fun PantallaCompras(inicioId: String, onVolver: () -> Unit, onMarcar: (String) -
                 .offset(y = (-24).dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (ruta.size == 1) {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = acento.copy(alpha = 0.1f),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "Toca un paquete y la app lo pide directo a ETECSA. Solo tendrás que confirmar en el aviso que aparece.",
-                        modifier = Modifier.padding(14.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
             actual.hijos.forEach { hijo ->
                 TarjetaNodo(
                     nodo = hijo,
