@@ -239,6 +239,7 @@ private fun MenuModulo(
         ) {
             if (transferResumen != null) {
                 val resumen = transferResumen!!
+                val portapapeles = LocalContext.current
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = Color(0xFFE7F5EF),
@@ -281,7 +282,6 @@ private fun MenuModulo(
                                     .padding(top = 2.dp)
                                     .horizontalScroll(rememberScrollState())
                             ) {
-                                val portapapeles = LocalContext.current
                                 TextButton(
                                     onClick = {
                                         val cm = portapapeles.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
