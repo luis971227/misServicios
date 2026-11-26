@@ -97,6 +97,7 @@ fun PantallaModulo(modulo: ModuloApp) {
     var nombreSel by remember { mutableStateOf("") }
     var guardarNueva by remember { mutableStateOf(true) }
     var cuentaMarcada by remember { mutableStateOf<String?>(null) }
+    var avisoMarca by remember { mutableStateOf<String?>(null) }
     val escanerTransfer = rememberLauncherForActivityResult(ScanContract()) { resultado ->
         val texto = resultado.contents ?: return@rememberLauncherForActivityResult
         val datos = Perfil.parsearQr(texto) ?: return@rememberLauncherForActivityResult
@@ -137,6 +138,8 @@ fun PantallaModulo(modulo: ModuloApp) {
             bloqueado = requiereAutenticacion && !autenticado,
             cuentaMarcada = cuentaMarcada,
             onOcultarCuenta = { cuentaMarcada = null },
+            avisoMarca = avisoMarca,
+            onOcultarAviso = { avisoMarca = null },
             onToque = { tocada ->
                 when {
                     tocada.pantalla == "transferir" -> {
@@ -160,8 +163,14 @@ fun PantallaModulo(modulo: ModuloApp) {
                     tocada.codigos.isNotEmpty() -> {
                         marcar(tocada.codigos.first())
                         if (requiereAutenticacion) {
-                            if (tocada.id == "autenticar") guardarAutenticado(true)
-                            if (tocada.id == "cerrar-sesion") guardarAutenticado(false)
+                            if (tocada.id == "autenticar") {
+                                guardarAutenticado(true)
+                                avisoMarca = "Cuando el sistema lo pida, escribe tu PIN de Transfermóvil. No es el de la tarjeta ni de Telebanca."
+                            }
+                            if (tocada.id == "cerrar-sesion") {
+                                guardarAutenticado(false)
+                                avisoMarca = null
+                            }
                         }
                     }
                     else -> abierta = tocada
@@ -328,6 +337,8 @@ private fun MenuModulo(
     bloqueado: Boolean,
     cuentaMarcada: String?,
     onOcultarCuenta: () -> Unit,
+    avisoMarca: String?,
+    onOcultarAviso: () -> Unit,
     onToque: (OpcionMenu) -> Unit,
     onVerPasos: (OpcionMenu) -> Unit
 ) {
@@ -378,6 +389,27 @@ private fun MenuModulo(
                             )
                         }
                         TextButton(onClick = onOcultarCuenta) { Text("✕") }
+                    }
+                }
+            }
+            if (avisoMarca != null) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFFFF3DB),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 14.dp, top = 4.dp, bottom = 4.dp)
+                    ) {
+                        Text(
+                            avisoMarca,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF9A6B0F)
+                        )
+                        TextButton(onClick = onOcultarAviso) { Text("✕") }
                     }
                 }
             }

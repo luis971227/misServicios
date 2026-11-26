@@ -166,12 +166,11 @@ object Modulos {
                 id = "autenticar",
                 titulo = "Autenticarse",
                 emoji = "🔑",
-                descripcion = "Autentica tu sesión de Transfermóvil con tu PIN. No es el PIN de la tarjeta ni de Telebanca.",
-                codigos = listOf("*444*40*03#", "*444*40*02#"),
-                etiquetas = listOf("BANMET", "BANDEC"),
+                descripcion = "Solo necesitas tu PIN de Transfermóvil. No es el PIN de la tarjeta ni de Telebanca.",
+                codigos = listOf("*444*40*03#"),
                 ocultarCodigos = true,
                 pasos = listOf(
-                    "Elige tu banco: BANMET o BANDEC",
+                    "Toca Autenticarse y se marca el código solo",
                     "Cuando el sistema lo pida, escribe tu PIN de Transfermóvil",
                     "Listo: se desbloquean las demás operaciones"
                 ),
