@@ -23,19 +23,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.luis971227.miservicios.ui.EtecsaScreen
-import com.luis971227.miservicios.ui.GastosScreen
-import com.luis971227.miservicios.ui.InicioScreen
-import com.luis971227.miservicios.ui.TransfermovilScreen
+import com.luis971227.miservicios.ui.etecsa.EtecsaScreen
+import com.luis971227.miservicios.ui.transfermovil.TransfermovilScreen
 import com.luis971227.miservicios.ui.theme.MisServiciosTheme
 
 data class Pestana(val id: String, val titulo: String, val emoji: String)
 
 val PESTANAS = listOf(
-    Pestana("inicio", "Inicio", "🏠"),
     Pestana("etecsa", "ETECSA", "📱"),
-    Pestana("tmv", "Transfermóvil", "💳"),
-    Pestana("gastos", "Gastos", "🧾")
+    Pestana("tmv", "Transfermóvil", "💳")
 )
 
 class MainActivity : ComponentActivity() {
@@ -52,7 +48,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun App() {
-    var pestana by remember { mutableStateOf("inicio") }
+    var pestana by remember { mutableStateOf("etecsa") }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -82,10 +78,8 @@ fun App() {
                 .padding(padding)
         ) {
             when (pestana) {
-                "etecsa" -> EtecsaScreen()
                 "tmv" -> TransfermovilScreen()
-                "gastos" -> GastosScreen()
-                else -> InicioScreen(irA = { pestana = it })
+                else -> EtecsaScreen()
             }
         }
     }

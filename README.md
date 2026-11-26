@@ -1,41 +1,51 @@
 # misServicios 📱💳
 
-App Android nativa con **Kotlin + Jetpack Compose + Material 3** que agrupa los servicios de **ETECSA** y **Transfermóvil** (Cuba), con registro local de gastos.
+App Android **nativa** con Kotlin + Jetpack Compose + Material 3, dividida en **dos módulos** para los servicios de Cuba.
 
-## Funciones
+## Módulos
 
-- 🏠 **Inicio**: resumen de gastos del mes y acceso rápido.
-- 📱 **ETECSA**: consulta de saldo y bonos por código USSD (botón que abre el marcador), recargas y planes desde el portal oficial.
-- 💳 **Transfermóvil**: menú USSD \*99\#, pagos de servicios, transferencias, consultas de tarjeta y enlaces oficiales.
-- 🧾 **Gastos**: registro local (sin backend) de recargas, pagos y transferencias, con categorías, historial y totales. Los datos se guardan en el teléfono.
+### 📱 ETECSA
+Menú de gestión de la línea con sus opciones:
+- **Comprar paquetes** — *pendiente de la guía* (códigos y pasos se irán pasando)
+- **Guía de opciones** — *pendiente de la guía*
+- Consultar saldo (`*222#`) y bonos/datos (`*222*266#`) — operativas: abren el marcador
+
+### 💳 Transfermóvil
+Menú con sus opciones:
+- **Códigos USSD** — *pendiente de la lista de códigos que se pasará*
+- Menú USSD `*99#` — operativa (abre el marcador)
+- Portal y aplicación (enlace oficial)
+
+Cada opción abre una **pantalla de detalle** con: descripción, código USSD (botón que abre el marcador), pasos numerados y/o enlace al portal. El botón *atrás* regresa al menú del módulo.
+
+## Estructura del código
+
+```
+app/src/main/java/com/luis971227/miservicios/
+├── MainActivity.kt            # navegación entre los 2 módulos + marcador USSD/enlaces
+├── data/
+│   └── Modulos.kt             # modelo de módulos y opciones (aquí se llenan las guías)
+└── ui/
+    ├── Comunes.kt             # PantallaModulo: menú + detalle + BackHandler
+    ├── etecsa/EtecsaScreen.kt
+    ├── transfermovil/TransfermovilScreen.kt
+    └── theme/Theme.kt
+```
+
+Para añadir una opción nueva con su guía: agrega un `OpcionMenu(...)` a la lista de opciones del módulo en `data/Modulos.kt` (código USSD, pasos, enlace o `pendiente = true` mientras no se tenga todo).
 
 ## Tecnología
 
-- Kotlin 2.0 + Jetpack Compose + Material 3 (UI declarativa, sin XML de layouts)
-- Gradle 8.10.2 con Kotlin DSL y *version catalog* (`gradle/libs.versions.toml`)
-- AGP 8.7.3 · compileSdk/targetSdk 35 · minSdk 24 (Android 7+)
-- Persistencia simple con `SharedPreferences` + JSON (sin dependencias extra)
+- Kotlin 2.0 · Jetpack Compose · Material 3
+- Gradle 8.10.2 (Kotlin DSL + version catalog) · AGP 8.7.3
+- minSdk 24 (Android 7+) · targetSdk 35
 
 ## Compilar el APK
 
-### En GitHub Actions (automático)
-
-Cada push a `main` (o PR) compila el APK debug y lo publica como **artefacto** en la pestaña *Actions* (`misServicios-debug-apk`). Al crear un tag `v*` (por ejemplo `v1.0.0`) se publica además como **release**.
-
-### En tu PC
-
-1. Abre el proyecto en **Android Studio** (Ladybug o más nuevo).
-2. `Run ▶ misServicios` o `Build > Build APK`.
-
-Por terminal:
-
-```bash
-./gradlew assembleDebug
-./gradlew assembleRelease
-```
+- **Automático**: cada push/PR compila el APK debug en *Actions*; al crear un tag `v*` se publica un release con el APK adjunto.
+- **Manual**: `./gradlew assembleDebug` (o Android Studio).
 
 ## Notas
 
-- Los códigos USSD y enlaces son informativos: verifícalos en los portales oficiales.
-- Firmar releases de Play requiere un keystore propio (el CI genera builds debug).
-- Los adaptadores para integraciones futuras (APIs reales) se pueden conectar en `app/src/main/java/com/luis971227/miservicios/data/`.
+- Los códigos son informativos y pueden cambiar; verificar en los portales oficiales.
+- Firmar releases de Play requiere keystore propio (el CI genera builds debug).
