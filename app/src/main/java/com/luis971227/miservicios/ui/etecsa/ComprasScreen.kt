@@ -46,8 +46,10 @@ import com.luis971227.miservicios.data.Modulos
 import com.luis971227.miservicios.data.NodoCompra
 
 @Composable
-fun PantallaCompras(onVolver: () -> Unit, onMarcar: (String) -> Unit) {
-    var ruta by remember { mutableStateOf(listOf(ComprasEtecsa.raiz)) }
+fun PantallaCompras(inicioId: String, onVolver: () -> Unit, onMarcar: (String) -> Unit) {
+    var ruta by remember(inicioId) {
+        mutableStateOf(listOf(ComprasEtecsa.buscar(inicioId) ?: ComprasEtecsa.raiz))
+    }
     var seleccionado by remember { mutableStateOf<NodoCompra?>(null) }
     var guiaActiva by remember { mutableStateOf<NodoCompra?>(null) }
     BackHandler(enabled = ruta.size > 1) { ruta = ruta.dropLast(1) }

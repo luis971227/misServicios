@@ -15,6 +15,17 @@ data class NodoCompra(
 object ComprasEtecsa {
     const val CODIGO = "*133#"
 
+    fun buscar(id: String): NodoCompra? {
+        fun en(nodo: NodoCompra): NodoCompra? {
+            if (nodo.id == id) return nodo
+            nodo.hijos.forEach { hijo ->
+                en(hijo)?.let { return it }
+            }
+            return null
+        }
+        return en(raiz)
+    }
+
     val raiz = NodoCompra(
         id = "raiz",
         titulo = "Comprar paquetes y planes",

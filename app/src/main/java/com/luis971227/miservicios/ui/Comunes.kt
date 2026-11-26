@@ -66,6 +66,7 @@ fun PantallaModulo(modulo: ModuloApp) {
     var entradaPara by remember { mutableStateOf<OpcionMenu?>(null) }
     var textoEntrada by remember { mutableStateOf("") }
     var comprasAbierta by remember(modulo.id) { mutableStateOf(false) }
+    var comprasInicio by remember(modulo.id) { mutableStateOf("raiz") }
     BackHandler(enabled = abierta != null && !comprasAbierta) { abierta = null }
 
     var codigoPendiente by remember { mutableStateOf<String?>(null) }
@@ -87,6 +88,7 @@ fun PantallaModulo(modulo: ModuloApp) {
     val opcion = abierta
     if (comprasAbierta) {
         PantallaCompras(
+            inicioId = comprasInicio,
             onVolver = { comprasAbierta = false },
             onMarcar = { marcar(it) }
         )
@@ -95,7 +97,10 @@ fun PantallaModulo(modulo: ModuloApp) {
             modulo = modulo,
             onToque = { tocada ->
                 when {
-                    tocada.pantalla == "compras" -> comprasAbierta = true
+                    tocada.pantalla == "compras" -> {
+                        comprasInicio = tocada.inicio ?: "raiz"
+                        comprasAbierta = true
+                    }
                     tocada.pendiente -> abierta = tocada
                     tocada.entrada != null -> {
                         entradaPara = tocada

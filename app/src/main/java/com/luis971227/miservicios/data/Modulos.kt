@@ -22,7 +22,8 @@ data class OpcionMenu(
     val color: Long = 0xFF64748B,
     val entrada: String? = null,
     val plantilla: String? = null,
-    val pantalla: String? = null
+    val pantalla: String? = null,
+    val inicio: String? = null
 )
 
 object Modulos {
@@ -36,11 +37,21 @@ object Modulos {
         colorB = 0xFF2E7DFF,
         opciones = listOf(
             OpcionMenu(
-                id = "comprar-paquetes",
-                titulo = "Comprar paquetes y planes",
-                emoji = "🛒",
-                descripcion = "Elige datos, SMS, voz o Plan Amigos dentro de la app y marca directo.",
+                id = "comprar-datos",
+                titulo = "Comprar datos",
+                emoji = "📶",
+                descripcion = "Tarifa por consumo, toDus, diario y planes de datos.",
                 pantalla = "compras",
+                inicio = "datos",
+                color = 0xFF0EA5E9
+            ),
+            OpcionMenu(
+                id = "comprar-planes",
+                titulo = "Comprar planes",
+                emoji = "📦",
+                descripcion = "Los paquetes mensuales combinados, directo con precio.",
+                pantalla = "compras",
+                inicio = "datos-planes",
                 color = 0xFF6366F1
             ),
             OpcionMenu(
