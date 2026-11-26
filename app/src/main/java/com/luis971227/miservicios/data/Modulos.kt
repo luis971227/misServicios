@@ -5,6 +5,8 @@ data class ModuloApp(
     val titulo: String,
     val emoji: String,
     val presentacion: String,
+    val colorA: Long,
+    val colorB: Long,
     val opciones: List<OpcionMenu>
 )
 
@@ -16,7 +18,8 @@ data class OpcionMenu(
     val codigo: String? = null,
     val enlace: String? = null,
     val pasos: List<String> = emptyList(),
-    val pendiente: Boolean = false
+    val pendiente: Boolean = false,
+    val color: Long = 0xFF64748B
 )
 
 object Modulos {
@@ -26,20 +29,24 @@ object Modulos {
         titulo = "ETECSA",
         emoji = "📱",
         presentacion = "Gestión de tu línea: paquetes, saldo y guía de opciones.",
+        colorA = 0xFF0B3D91,
+        colorB = 0xFF2E7DFF,
         opciones = listOf(
             OpcionMenu(
                 id = "paquetes",
                 titulo = "Comprar paquetes",
                 emoji = "📦",
-                descripcion = "Compra de datos, voz y SMS.",
-                pendiente = true
+                descripcion = "Datos, voz y SMS.",
+                pendiente = true,
+                color = 0xFF6366F1
             ),
             OpcionMenu(
                 id = "guia",
                 titulo = "Guía de opciones",
                 emoji = "📖",
                 descripcion = "Guía paso a paso del menú de tu línea.",
-                pendiente = true
+                pendiente = true,
+                color = 0xFF8B5CF6
             ),
             OpcionMenu(
                 id = "saldo",
@@ -49,7 +56,8 @@ object Modulos {
                 pasos = listOf(
                     "Marca el código desde la app de Teléfono",
                     "En unos segundos aparece el saldo en pantalla"
-                )
+                ),
+                color = 0xFFF59E0B
             ),
             OpcionMenu(
                 id = "bonos",
@@ -59,7 +67,8 @@ object Modulos {
                 pasos = listOf(
                     "Marca el código desde la app de Teléfono",
                     "Elige la opción de consulta en el menú"
-                )
+                ),
+                color = 0xFF10B981
             )
         )
     )
@@ -69,13 +78,16 @@ object Modulos {
         titulo = "Transfermóvil",
         emoji = "💳",
         presentacion = "Códigos USSD y servicios con tu tarjeta cubana.",
+        colorA = 0xFF00564B,
+        colorB = 0xFF00BFA5,
         opciones = listOf(
             OpcionMenu(
                 id = "ussd",
                 titulo = "Códigos USSD",
                 emoji = "🔢",
                 descripcion = "Lista completa de códigos USSD de Transfermóvil.",
-                pendiente = true
+                pendiente = true,
+                color = 0xFF0EA5E9
             ),
             OpcionMenu(
                 id = "menu-ussd",
@@ -85,7 +97,8 @@ object Modulos {
                 pasos = listOf(
                     "Marca el código desde la app de Teléfono",
                     "Navega por el menú con los números de opción"
-                )
+                ),
+                color = 0xFF059669
             ),
             OpcionMenu(
                 id = "portal",
@@ -95,7 +108,8 @@ object Modulos {
                 pasos = listOf(
                     "Abre el enlace en el navegador",
                     "Descarga la app o entra al portal"
-                )
+                ),
+                color = 0xFF6366F1
             )
         )
     )
