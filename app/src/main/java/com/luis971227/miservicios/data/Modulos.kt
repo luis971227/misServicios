@@ -40,9 +40,9 @@ object Modulos {
                 id = "comprar-datos",
                 titulo = "Comprar datos",
                 emoji = "📶",
-                descripcion = "Tarifa por consumo, toDus, diario y planes de datos.",
+                descripcion = "Los planes de datos, directo con precio.",
                 pantalla = "compras",
-                inicio = "datos",
+                inicio = "datos-planes",
                 color = 0xFF0EA5E9
             ),
             OpcionMenu(
