@@ -269,7 +269,7 @@ class AsistenteUssd : AccessibilityService() {
             tarjeta.addView(boton)
             val contenido = FrameLayout(this).apply {
                 setBackgroundColor(0x66000000.toInt())
-                gravity = Gravity.CENTER
+                foregroundGravity = Gravity.CENTER
             }
             contenido.addView(
                 tarjeta,
