@@ -84,8 +84,9 @@ class AsistenteUssd : AccessibilityService() {
             texto.contains("fallid", ignoreCase = true)
         ) {
             ocultarCortina()
-            if (!texto.contains("cuenta", ignoreCase = true)) return
-        } else if (cortina == null && !cortinaPendiente && !cortinaOcultadaManual) {
+            return
+        }
+        if (cortina == null && !cortinaPendiente && !cortinaOcultadaManual) {
             mostrarCortina()
         }
 
@@ -234,41 +235,75 @@ class AsistenteUssd : AccessibilityService() {
         handler.post {
             if (cortina != null) return@post
             val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            val tarjeta = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
+            val emoji = TextView(this).apply {
+                text = "🤖"
+                textSize = 34f
                 gravity = Gravity.CENTER
-                setPadding(70, 60, 70, 50)
-                background = GradientDrawable().apply {
-                    setColor(0xF20B1220.toInt())
-                    cornerRadius = 56f
-                }
+            }
+            val titulo = TextView(this).apply {
+                text = "Atendiendo el banco…"
+                setTextColor(0xFFFFFFFF.toInt())
+                textSize = 18f
+                gravity = Gravity.CENTER
+                setPadding(0, 30, 0, 0)
+            }
+            val texto = TextView(this).apply {
+                text = "Estamos haciendo tu transferencia.\nCuando llegue tu PIN, escr\u00edbelo."
+                setTextColor(0xFFB9C4D4.toInt())
+                textSize = 15f
+                gravity = Gravity.CENTER
+                setPadding(0, 18, 0, 0)
             }
             val progreso = ProgressBar(this)
-            tarjeta.addView(
-                progreso,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { gravity = Gravity.CENTER }
-            )
-            val texto = TextView(this).apply {
-                text = "Realizando tu transferencia…\n\nLos diálogos del banco se están atendiendo solos.\nNo toques nada hasta escribir tu PIN."
-                setTextColor(0xFFFFFFFF.toInt())
-                textSize = 16f
+            val boton = TextView(this).apply {
+                text = "Ocultar"
+                setTextColor(0xFF8FA3BC.toInt())
+                textSize = 13f
                 gravity = Gravity.CENTER
-                setPadding(0, 40, 0, 0)
-            }
-            val boton = Button(this).apply {
-                text = "✕ Ocultar cortina"
+                setPadding(40, 24, 40, 24)
+                background = GradientDrawable().apply {
+                    setColor(0xFF223146.toInt())
+                    cornerRadius = 60f
+                }
                 setOnClickListener {
                     cortinaOcultadaManual = true
                     ocultarCortina()
                 }
             }
+            val tarjeta = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(70, 70, 70, 46)
+                background = GradientDrawable().apply {
+                    setColor(0xFF15202E.toInt())
+                    cornerRadius = 64f
+                }
+            }
+            tarjeta.addView(
+                emoji,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { gravity = Gravity.CENTER }
+            )
+            tarjeta.addView(
+                progreso,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { gravity = Gravity.CENTER; topMargin = 30 }
+            )
+            tarjeta.addView(titulo)
             tarjeta.addView(texto)
-            tarjeta.addView(boton)
+            tarjeta.addView(
+                boton,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { gravity = Gravity.CENTER; topMargin = 44 }
+            )
             val contenido = FrameLayout(this).apply {
-                setBackgroundColor(0x66000000.toInt())
+                setBackgroundColor(0xFF0A0E17.toInt())
                 foregroundGravity = Gravity.CENTER
             }
             contenido.addView(
@@ -283,12 +318,12 @@ class AsistenteUssd : AccessibilityService() {
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                    PixelFormat.TRANSLUCENT
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    PixelFormat.OPAQUE
                 )
                 wm.addView(contenido, params)
                 cortina = contenido
-                handler.postDelayed({ ocultarCortina() }, 120_000)
             } catch (_: Exception) {
                 if (Settings.canDrawOverlays(this)) {
                     try {
@@ -297,15 +332,15 @@ class AsistenteUssd : AccessibilityService() {
                             WindowManager.LayoutParams.MATCH_PARENT,
                             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                            PixelFormat.TRANSLUCENT
+                            PixelFormat.OPAQUE
                         )
                         wm.addView(contenido, params)
                         cortina = contenido
-                        handler.postDelayed({ ocultarCortina() }, 120_000)
                     } catch (_: Exception) {
                     }
                 }
             }
+            handler.postDelayed({ if (cortina === contenido) ocultarCortina() }, 120_000)
         }
     }
 
