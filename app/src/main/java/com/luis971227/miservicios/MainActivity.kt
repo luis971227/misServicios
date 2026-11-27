@@ -39,7 +39,9 @@ import kotlinx.coroutines.delay
 import com.luis971227.miservicios.ui.etecsa.EtecsaScreen
 import com.luis971227.miservicios.ui.transfermovil.TransfermovilScreen
 import com.luis971227.miservicios.ui.theme.MisServiciosTheme
+import com.luis971227.miservicios.ui.LicenciaGate
 import com.luis971227.miservicios.util.Actualizaciones
+import com.luis971227.miservicios.util.Licencias
 import java.io.File
 
 data class Pestana(val id: String, val titulo: String, val emoji: String)
@@ -63,6 +65,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun App() {
+    var licenciaOk by remember {
+        mutableStateOf(
+            Licencias.claveGuardada(LocalContext.current)?.let {
+                Licencias.validar(LocalContext.current, it) is Licencias.Result.Valid
+            } == true
+        )
+    }
+    if (!licenciaOk) {
+        LicenciaGate(onValidada = { licenciaOk = true })
+        return
+    }
     var pestana by remember { mutableStateOf("etecsa") }
     val context = LocalContext.current
     var actualizacion by remember { mutableStateOf<Actualizaciones.VersionRemota?>(null) }
