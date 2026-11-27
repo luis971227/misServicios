@@ -65,6 +65,7 @@ import com.luis971227.miservicios.data.OpcionMenu
 import com.luis971227.miservicios.marcarCodigo
 import com.luis971227.miservicios.ui.etecsa.PantallaCompras
 import com.luis971227.miservicios.ui.transfermovil.PantallaPerfil
+import com.luis971227.miservicios.util.TransfermovilUssd
 import com.luis971227.miservicios.ui.transfermovil.PantallaTransferir
 import com.luis971227.miservicios.util.AsistenteUssd
 
@@ -129,7 +130,13 @@ fun PantallaModulo(modulo: ModuloApp) {
             onTransferir = { destino, detalle ->
                 transferAbierta = false
                 transferResumen = destino to detalle
-                marcar("*444*45#")
+                val banco = prefs.getString("banco_tmv", "03") ?: "03"
+                val monto = prefs.getString("asistente_monto", "") ?: ""
+                val telefono = prefs.getString("asistente_telefono", "") ?: ""
+                val moneda = prefs.getString("asistente_moneda", "CUP") ?: "CUP"
+                val concepto = prefs.getString("asistente_concepto", "") ?: ""
+                val directa = TransfermovilUssd.construirTransferencia(banco, destino, monto, moneda, telefono, concepto)
+                marcar(directa ?: "*444*45#")
             }
         )
     } else if (comprasAbierta) {
