@@ -46,6 +46,12 @@ import java.io.File
 
 data class Pestana(val id: String, val titulo: String, val emoji: String)
 
+private fun licenciaValida(context: android.content.Context): Boolean {
+    return Licencias.claveGuardada(context)?.let {
+        Licencias.validar(context, it) is Licencias.Result.Valid
+    } == true
+}
+
 val PESTANAS = listOf(
     Pestana("etecsa", "ETECSA", "📱"),
     Pestana("tmv", "Transfermóvil", "💳")
@@ -65,13 +71,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun App() {
-    var licenciaOk by remember {
-        mutableStateOf(
-            Licencias.claveGuardada(LocalContext.current)?.let {
-                Licencias.validar(LocalContext.current, it) is Licencias.Result.Valid
-            } == true
-        )
-    }
+    val contextoInicial = LocalContext.current
+    var licenciaOk by remember { mutableStateOf(licenciaValida(contextoInicial)) }
     if (!licenciaOk) {
         LicenciaGate(onValidada = { licenciaOk = true })
         return
