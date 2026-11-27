@@ -103,10 +103,6 @@ class AsistenteUssd : AccessibilityService() {
             marcarCodigo(applicationContext, "*444*45#", true)
             return
         }
-        if (cortina == null && !cortinaPendiente && !cortinaOcultadaManual) {
-            mostrarCortina()
-        }
-
         val campo = buscarCampo(raiz, 0)
         val esConfirmacion = texto.contains("está seguro", true) ||
             texto.contains("seguro que", true) ||

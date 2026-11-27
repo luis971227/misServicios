@@ -438,7 +438,6 @@ fun PantallaTransferir(
                         .putBoolean("via_corta_preferida", viaCorta)
                         .putLong("asistente_ts", System.currentTimeMillis())
                         .apply()
-                    AsistenteUssd.instancia?.mostrarCortina()
                     val partes = mutableListOf(
                         "Monto: " + monto.trim() + " " + moneda,
                         if (tipoTransfer == "terceros") "A un tercero" else "Entre mis cuentas",
