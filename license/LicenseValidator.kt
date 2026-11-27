@@ -1,7 +1,9 @@
 package com.seyeal.licencia
 
 import android.content.Context
+import android.provider.Settings
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import javax.crypto.Mac
@@ -11,8 +13,11 @@ import javax.crypto.spec.SecretKeySpec
  * Copia de LicenseManager (repo luis971227/Licencia) para validar claves en esta app.
  * Debe mantenerse sincronizada con el SECRET del proyecto Licencia.
  *
+ * Cada licencia está atada a UN teléfono: DEVICE_CODE = Settings.Secure.ANDROID_ID.
+ *
  * Uso en el arranque de la app:
- *   when (val r = LicenseValidator.validate("$appCode", claveIntroducida)) {
+ *   val device = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+ *   when (val r = LicenseValidator.validate("$appCode", device, claveIntroducida)) {
  *       is LicenseValidator.Result.Valid -> { LicenseValidator.saveKey(context, "$appCode", clave) /* continuar */ }
  *       is LicenseValidator.Result.Invalid -> { /* mostrar r.reason y cerrar */ }
  *   }
@@ -29,16 +34,26 @@ object LicenseValidator {
         data class Invalid(val reason: String) : Result()
     }
 
-    fun validate(appCode: String = APP_CODE, key: String): Result {
+    /** Código único de este teléfono para el generador de licencias. */
+    fun deviceCode(context: Context): String {
+        return Settings.Secure.getString(
+            context.contentResolver, Settings.Secure.ANDROID_ID
+        )?.uppercase(Locale.US) ?: ""
+    }
+
+    fun validate(appCode: String, deviceCode: String, key: String): Result {
         val parts = key.trim().uppercase(Locale.US).split("-")
-        if (parts.size != 4 || parts[0] != "SEYEAL") {
+        if (parts.size != 5 || parts[0] != "SEYEAL") {
             return Result.Invalid("Formato de clave incorrecto")
         }
-        val (_, code, expiry, sig) = parts
+        val (_, code, device, expiry, sig) = parts
         if (code != appCode.uppercase(Locale.US)) {
             return Result.Invalid("La clave no corresponde a esta app ($appCode)")
         }
-        if (sig != signature(code, expiry)) {
+        if (deviceCode.uppercase(Locale.US).isNotEmpty() && device != deviceCode.uppercase(Locale.US)) {
+            return Result.Invalid("Esta licencia es para OTRO teléfono")
+        }
+        if (sig != signature(code, device, expiry)) {
             return Result.Invalid("Firma inválida: clave falsificada o mal copiada")
         }
         val sdf = SimpleDateFormat("yyyyMMdd", Locale.US).apply {
@@ -60,7 +75,7 @@ object LicenseValidator {
     fun hasValidSavedKey(context: Context, appCode: String = APP_CODE): Boolean {
         val key = context.getSharedPreferences("licencia", Context.MODE_PRIVATE)
             .getString("key_$appCode", null) ?: return false
-        return validate(appCode, key) is Result.Valid
+        return validate(appCode, deviceCode(context), key) is Result.Valid
     }
 
     fun saveKey(context: Context, appCode: String = APP_CODE, key: String) {
@@ -68,10 +83,12 @@ object LicenseValidator {
             .edit().putString("key_$appCode", key).apply()
     }
 
-    private fun signature(appCode: String, expiry: String): String {
+    private fun signature(appCode: String, deviceCode: String, expiry: String): String {
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(SecretKeySpec(SECRET.toByteArray(), "HmacSHA256"))
-        val digest = mac.doFinal((appCode.uppercase(Locale.US) + expiry).toByteArray())
+        val digest = mac.doFinal(
+            (appCode.uppercase(Locale.US) + deviceCode.uppercase(Locale.US) + expiry).toByteArray()
+        )
         var bits = 0L
         for (i in 0 until 5) bits = (bits shl 8) or (digest[i].toLong() and 0xFF)
         val sb = StringBuilder()
