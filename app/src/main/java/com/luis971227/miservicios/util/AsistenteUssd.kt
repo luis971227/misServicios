@@ -11,9 +11,12 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.graphics.drawable.GradientDrawable
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ProgressBar
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -23,6 +26,8 @@ class AsistenteUssd : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private var pendiente = false
     private var cortina: View? = null
+    @Volatile private var cortinaPendiente = false
+    @Volatile private var cortinaOcultadaManual = false
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -80,6 +85,8 @@ class AsistenteUssd : AccessibilityService() {
         ) {
             ocultarCortina()
             if (!texto.contains("cuenta", ignoreCase = true)) return
+        } else if (cortina == null && !cortinaPendiente && !cortinaOcultadaManual) {
+            mostrarCortina()
         }
 
         val campo = buscarCampo(raiz, 0)
@@ -221,27 +228,56 @@ class AsistenteUssd : AccessibilityService() {
     }
 
     fun mostrarCortina() {
+        cortinaOcultadaManual = false
+        if (cortinaPendiente) return
+        cortinaPendiente = true
         handler.post {
             if (cortina != null) return@post
             val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            val contenido = LinearLayout(this).apply {
+            val tarjeta = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setBackgroundColor(0xF2070B14.toInt())
+                setPadding(70, 60, 70, 50)
+                background = GradientDrawable().apply {
+                    setColor(0xF20B1220.toInt())
+                    cornerRadius = 56f
+                }
             }
+            val progreso = ProgressBar(this)
+            tarjeta.addView(
+                progreso,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { gravity = Gravity.CENTER }
+            )
             val texto = TextView(this).apply {
-                text = "🤖 Realizando tu transferencia…\n\nLos diálogos del banco se están atendiendo solos.\nNo toques nada hasta escribir tu PIN."
+                text = "Realizando tu transferencia…\n\nLos diálogos del banco se están atendiendo solos.\nNo toques nada hasta escribir tu PIN."
                 setTextColor(0xFFFFFFFF.toInt())
-                textSize = 17f
+                textSize = 16f
                 gravity = Gravity.CENTER
-                setPadding(80, 40, 80, 40)
+                setPadding(0, 40, 0, 0)
             }
             val boton = Button(this).apply {
                 text = "✕ Ocultar cortina"
-                setOnClickListener { ocultarCortina() }
+                setOnClickListener {
+                    cortinaOcultadaManual = true
+                    ocultarCortina()
+                }
             }
-            contenido.addView(texto)
-            contenido.addView(boton)
+            tarjeta.addView(texto)
+            tarjeta.addView(boton)
+            val contenido = FrameLayout(this).apply {
+                setBackgroundColor(0x66000000.toInt())
+                gravity = Gravity.CENTER
+            }
+            contenido.addView(
+                tarjeta,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
+                ).apply { gravity = Gravity.CENTER }
+            )
             try {
                 val params = WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT,
@@ -274,6 +310,7 @@ class AsistenteUssd : AccessibilityService() {
     }
 
     fun ocultarCortina() {
+        cortinaPendiente = false
         handler.post {
             val vista = cortina ?: return@post
             cortina = null

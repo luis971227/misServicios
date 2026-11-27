@@ -3,6 +3,7 @@ package com.luis971227.miservicios.ui.transfermovil
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,8 +27,8 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -70,6 +71,14 @@ fun PantallaTransferir(
     var concepto by remember { mutableStateOf("") }
     var guardarNueva by remember { mutableStateOf(true) }
     var mensaje by remember { mutableStateOf<String?>(null) }
+    val bancoNombre = when (
+        context.getSharedPreferences("miservicios", android.content.Context.MODE_PRIVATE)
+            .getString("banco_tmv", "03")
+    ) {
+        "01" -> "BPA"
+        "02" -> "Bandec"
+        else -> "Banmet"
+    }
 
     BackHandler { onVolver() }
 
@@ -137,7 +146,7 @@ fun PantallaTransferir(
                             color = Color.White
                         )
                         Text(
-                            "Todo en una pantalla y confirmas una vez",
+                            "Llena todo aquí y confirma una vez",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.85f)
                         )
@@ -151,18 +160,18 @@ fun PantallaTransferir(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .offset(y = (-24).dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             ElevatedCard(
-                shape = RoundedCornerShape(22.dp),
+                shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
-                        "DESTINATARIO",
+                        "👤  DESTINATARIO",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
@@ -170,23 +179,40 @@ fun PantallaTransferir(
                     )
                     if (cuentas.isNotEmpty()) {
                         cuentas.forEach { cuenta ->
+                            val seleccionada = destino == cuenta.numero
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(
+                                        if (seleccionada) Color(Modulos.tmv.colorB.toInt()).copy(alpha = 0.10f)
+                                        else Color.Transparent
+                                    )
                                     .clickable {
                                         destino = cuenta.numero
                                         nombre = cuenta.nombre
                                         telefono = cuenta.telefono
                                     }
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
                             ) {
-                                Text(
-                                    if (destino == cuenta.numero) "☑" else "⬜",
-                                    fontSize = 18.sp
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(Modulos.tmv.colorB.toInt()).copy(alpha = 0.16f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        if (cuenta.nombre.isNotBlank()) cuenta.nombre.trim().take(1).uppercase()
+                                        else "💳",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(Modulos.tmv.colorB.toInt())
+                                    )
+                                }
                                 Column(
                                     modifier = Modifier
-                                        .padding(start = 10.dp)
+                                        .padding(start = 12.dp)
                                         .weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(1.dp)
                                 ) {
@@ -202,6 +228,23 @@ fun PantallaTransferir(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .clip(CircleShape)
+                                        .border(
+                                            width = 2.dp,
+                                            color = if (seleccionada) Color(Modulos.tmv.colorB.toInt())
+                                            else Color(0xFFC6CBD4),
+                                            shape = CircleShape
+                                        )
+                                        .background(if (seleccionada) Color(Modulos.tmv.colorB.toInt()) else Color.Transparent),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (seleccionada) {
+                                        Text("✓", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                                 TextButton(onClick = {
                                     Cuentas.eliminar(context, cuenta.numero)
@@ -231,7 +274,7 @@ fun PantallaTransferir(
                                 .fillMaxWidth()
                                 .clickable { guardarNueva = !guardarNueva }
                         ) {
-                            Text(if (guardarNueva) "☑" else "⬜", fontSize = 18.sp)
+                            Text(if (guardarNueva) "☑️" else "⬜", fontSize = 18.sp)
                             Text(
                                 "Guardar esta cuenta",
                                 modifier = Modifier.padding(start = 10.dp),
@@ -242,7 +285,7 @@ fun PantallaTransferir(
                     OutlinedTextField(
                         value = telefono,
                         onValueChange = { telefono = it.filter { c -> c.isDigit() }.take(8) },
-                        label = { Text("Teléfono del destinatario (para el aviso)") },
+                        label = { Text("Teléfono del destinatario (opcional)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -260,7 +303,7 @@ fun PantallaTransferir(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "📷 Escanear QR del destinatario",
+                            "📷  Escanear QR del destinatario",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -269,15 +312,15 @@ fun PantallaTransferir(
             }
 
             ElevatedCard(
-                shape = RoundedCornerShape(22.dp),
+                shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
-                        "DETALLES",
+                        "💳  DETALLES",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
@@ -291,54 +334,18 @@ fun PantallaTransferir(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            "Tipo:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        listOf("terceros" to "A un tercero", "propias" to "Entre mis cuentas").forEach { (valor, etiqueta) ->
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (tipoTransfer == valor) Color(Modulos.tmv.colorB.toInt()) else Color(0xFFEDEFF3),
-                                modifier = Modifier.clickable { tipoTransfer = valor }
-                            ) {
-                                Text(
-                                    etiqueta,
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (tipoTransfer == valor) Color.White else Color(0xFF444B54)
-                                )
-                            }
-                        }
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            "Moneda:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        listOf("CUP", "MLC").forEach { divisa ->
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (moneda == divisa) Color(Modulos.tmv.colorB.toInt()) else Color(0xFFEDEFF3),
-                                modifier = Modifier.clickable { moneda = divisa }
-                            ) {
-                                Text(
-                                    divisa,
-                                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (moneda == divisa) Color.White else Color(0xFF444B54)
-                                )
-                            }
-                        }
-                    }
+                    FilaChip(
+                        titulo = "Moneda:",
+                        opciones = listOf("CUP" to "CUP", "MLC" to "MLC"),
+                        seleccion = moneda,
+                        alElegir = { moneda = it }
+                    )
+                    FilaChip(
+                        titulo = "Tipo:",
+                        opciones = listOf("terceros" to "A un tercero", "propias" to "Entre mis cuentas"),
+                        seleccion = tipoTransfer,
+                        alElegir = { tipoTransfer = it }
+                    )
                     OutlinedTextField(
                         value = concepto,
                         onValueChange = { concepto = it },
@@ -346,6 +353,31 @@ fun PantallaTransferir(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                }
+            }
+
+            if (destino.isNotBlank() && monto.isNotBlank()) {
+                ElevatedCard(
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            "🧾  RESUMEN",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp
+                        )
+                        LineaResumen("Destino", destino.trim())
+                        LineaResumen("Monto", monto.trim() + " " + moneda)
+                        LineaResumen("Tipo", if (tipoTransfer == "terceros") "A un tercero" else "Entre mis cuentas")
+                        LineaResumen("Banco", bancoNombre)
+                        if (concepto.isNotBlank()) LineaResumen("Concepto", concepto.trim())
+                    }
                 }
             }
 
@@ -379,30 +411,35 @@ fun PantallaTransferir(
                         .putLong("asistente_ts", System.currentTimeMillis())
                         .apply()
                     AsistenteUssd.instancia?.mostrarCortina()
-                    val partes = mutableListOf("Monto: " + monto.trim() + " " + moneda)
+                    val partes = mutableListOf(
+                        "Monto: " + monto.trim() + " " + moneda,
+                        if (tipoTransfer == "terceros") "A un tercero" else "Entre mis cuentas",
+                        "Banco: " + bancoNombre
+                    )
                     if (telefono.isNotBlank()) partes.add("Teléfono: " + telefono.trim())
                     if (concepto.isNotBlank()) partes.add("Concepto: " + concepto.trim())
                     onTransferir(numero, partes.joinToString(" · "))
                 },
                 enabled = destino.isNotBlank() && monto.isNotBlank(),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(Modulos.tmv.colorB.toInt())
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
             ) {
                 Text(
-                    "📞 Confirmar y transferir",
+                    "📞  Transferir ahora",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
             }
 
-
             if (!AsistenteUssd.estaActivo(context)) {
                 ElevatedCard(
-                    shape = RoundedCornerShape(22.dp),
+                    shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -429,7 +466,11 @@ fun PantallaTransferir(
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("⚙️ Activar en Ajustes de accesibilidad")
+                            Text(
+                                "⚙️ Activar en Ajustes de accesibilidad",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -437,5 +478,60 @@ fun PantallaTransferir(
 
             Spacer(Modifier.height(16.dp))
         }
+    }
+}
+
+@Composable
+private fun FilaChip(
+    titulo: String,
+    opciones: List<Pair<String, String>>,
+    seleccion: String,
+    alElegir: (String) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            titulo,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold
+        )
+        opciones.forEach { (valor, etiqueta) ->
+            val activo = seleccion == valor
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = if (activo) Color(Modulos.tmv.colorB.toInt()) else Color(0xFFEDEFF3),
+                modifier = Modifier.clickable { alElegir(valor) }
+            ) {
+                Text(
+                    etiqueta,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
+                    fontWeight = FontWeight.Bold,
+                    color = if (activo) Color.White else Color(0xFF444B54)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LineaResumen(etiqueta: String, valor: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            etiqueta,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            valor,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+        )
     }
 }

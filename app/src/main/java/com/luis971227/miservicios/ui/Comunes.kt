@@ -103,12 +103,19 @@ fun PantallaModulo(modulo: ModuloApp) {
         codigoPendiente = null
     }
 
+    var bancoTmv by remember(modulo.id) { mutableStateOf(prefs.getString("banco_tmv", "03") ?: "03") }
+    fun ajustarBanco(codigo: String): String {
+        if (modulo.id != "tmv") return codigo
+        return codigo
+            .replace(Regex("(\\*444\\*40\\*)\\d{2}"), "${'$'}1" + bancoTmv)
+            .replace(Regex("(\\*444\\*49\\*)\\d{2}"), "${'$'}1" + bancoTmv)
+    }
     fun marcar(codigo: String) {
         val concedido = ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
         if (concedido) {
-            marcarCodigo(context, codigo, true)
+            marcarCodigo(context, ajustarBanco(codigo), true)
         } else {
-            codigoPendiente = codigo
+            codigoPendiente = ajustarBanco(codigo)
             pedirPermiso.launch(Manifest.permission.CALL_PHONE)
         }
     }
@@ -137,6 +144,11 @@ fun PantallaModulo(modulo: ModuloApp) {
             opciones = opcionesVisibles,
             bloqueado = requiereAutenticacion && !autenticado,
             transferResumen = transferResumen,
+            bancoTmv = if (modulo.id == "tmv") bancoTmv else "",
+            onBanco = { codigo ->
+                bancoTmv = codigo
+                prefs.edit().putString("banco_tmv", codigo).apply()
+            },
             onOcultarTransfer = {
                 transferResumen = null
                 prefs.edit().putBoolean("asistente_activo", false).apply()
@@ -254,6 +266,8 @@ private fun MenuModulo(
     opciones: List<OpcionMenu>,
     bloqueado: Boolean,
     transferResumen: Pair<String, String>?,
+    bancoTmv: String = "",
+    onBanco: (String) -> Unit = {},
     onOcultarTransfer: () -> Unit,
     onToque: (OpcionMenu) -> Unit,
     onVerPasos: (OpcionMenu) -> Unit
@@ -271,6 +285,48 @@ private fun MenuModulo(
                 .offset(y = (-24).dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (modulo.id == "tmv" && bancoTmv.isNotEmpty()) {
+                ElevatedCard(
+                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            "\ud83c\udfe6 MI BANCO",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            listOf("01" to "BPA", "02" to "Bandec", "03" to "Banmet").forEach { (codigo, nombre) ->
+                                Surface(
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = if (bancoTmv == codigo) Color(Modulos.tmv.colorB.toInt()) else Color(0xFFEDEFF3),
+                                    modifier = Modifier.clickable { onBanco(codigo) }
+                                ) {
+                                    Text(
+                                        nombre,
+                                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (bancoTmv == codigo) Color.White else Color(0xFF444B54)
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            "Se usa al autenticarte y registrar tu tarjeta.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
             if (transferResumen != null) {
                 val resumen = transferResumen!!
                 val portapapeles = LocalContext.current

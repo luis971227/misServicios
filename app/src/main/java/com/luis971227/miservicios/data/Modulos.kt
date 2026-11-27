@@ -329,24 +329,14 @@ object Modulos {
                 color = 0xFFDB2777
             ),
             OpcionMenu(
-                id = "registro-bandec",
-                titulo = "Registro BANDEC",
+                id = "registro-tarjeta",
+                titulo = "Registrar tarjeta",
                 emoji = "📝",
-                descripcion = "Registrar tu tarjeta de BANDEC.",
+                descripcion = "Registrar tu tarjeta en el banco elegido arriba.",
                 plantilla = "*444*49*02*{0}#",
                 entrada = "Número de tarjeta",
                 ocultarCodigos = true,
                 color = 0xFF059669
-            ),
-            OpcionMenu(
-                id = "registro-banmet",
-                titulo = "Registro BANMET",
-                emoji = "📝",
-                descripcion = "Registrar tu tarjeta de BANMET.",
-                plantilla = "*444*49*03*{0}#",
-                entrada = "Número de tarjeta",
-                ocultarCodigos = true,
-                color = 0xFF0F766E
             ),
             OpcionMenu(
                 id = "menu-ussd",
@@ -371,7 +361,7 @@ object Modulos {
                 color = 0xFF6366F1
             )
         ),
-        nota = "Autentica tu tarjeta antes de operar: BANMET usa *444*40*03# y BANDEC *444*40*02#. Estos códigos provienen de fuentes de la comunidad y pueden cambiar con la política bancaria; si alguno falla, confirma en www.transfermovil.cu o en tu banco."
+        nota = "Elige tu banco arriba: BPA usa el código 01, BANDEC el 02 y BANMET el 03 (se aplica a autenticarse y registrar tarjeta; los demás códigos son iguales para todos los bancos). Códigos de fuentes de la comunidad: si alguno falla, confirma en www.transfermovil.cu o en tu banco."
     )
 
     val nota = "La mayoría de los códigos son gratuitos y no necesitan internet. Si alguno no funciona, consulta www.etecsa.cu o llama al servicio al cliente."
