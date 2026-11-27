@@ -22,6 +22,7 @@ data class OpcionMenu(
     val pendiente: Boolean = false,
     val color: Long = 0xFF64748B,
     val entrada: String? = null,
+    val entradas: List<String> = emptyList(),
     val plantilla: String? = null,
     val pantalla: String? = null,
     val inicio: String? = null,
@@ -116,6 +117,24 @@ object Modulos {
                 ocultarCodigos = true,
                 pasos = listOf("Marca *222*732#", "Verás el estado de tu recarga"),
                 color = 0xFF14B8A6
+            ),
+            OpcionMenu(
+                id = "transferir-saldo",
+                titulo = "Transferir saldo",
+                emoji = "\ud83d\udcb8",
+                descripcion = "Envía saldo de tu línea a otro móvil ETECSA con la vía corta.",
+                codigos = listOf("*234#"),
+                entradas = listOf("Número del receptor", "Clave (por defecto 1234)", "Importe en CUP"),
+                plantilla = "*234*1*{0}*{1}*{2}#",
+                ocultarCodigos = true,
+                pasos = listOf(
+                    "Toca la opción y escribe el número, tu clave y el importe",
+                    "La app marca *234*1*número*clave*importe# automáticamente",
+                    "Confirma la transferencia en el mensaje que aparece en pantalla",
+                    "Si nunca cambiaste tu clave, la predeterminada es 1234",
+                    "Cada transferencia tiene un costo y se permite un máximo de 3 al día"
+                ),
+                color = 0xFFDB2777
             ),
             OpcionMenu(
                 id = "recarga-tarjeta",

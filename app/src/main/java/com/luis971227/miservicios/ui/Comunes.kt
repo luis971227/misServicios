@@ -74,6 +74,7 @@ fun PantallaModulo(modulo: ModuloApp) {
     var abierta by remember(modulo.id) { mutableStateOf<OpcionMenu?>(null) }
     var entradaPara by remember { mutableStateOf<OpcionMenu?>(null) }
     var textoEntrada by remember { mutableStateOf("") }
+    var textosMulti by remember { mutableStateOf(listOf<String>()) }
     var comprasAbierta by remember(modulo.id) { mutableStateOf(false) }
     var comprasInicio by remember(modulo.id) { mutableStateOf("raiz") }
     BackHandler(enabled = abierta != null && !comprasAbierta) { abierta = null }
@@ -149,9 +150,10 @@ fun PantallaModulo(modulo: ModuloApp) {
                         comprasAbierta = true
                     }
                     tocada.pendiente -> abierta = tocada
-                    tocada.entrada != null -> {
+                    tocada.entrada != null || tocada.entradas.isNotEmpty() -> {
                         entradaPara = tocada
                         textoEntrada = ""
+                        textosMulti = List(tocada.entradas.size) { "" }
                     }
                     tocada.codigos.size > 1 -> abierta = tocada
                     tocada.codigos.isNotEmpty() -> {
@@ -177,6 +179,7 @@ fun PantallaModulo(modulo: ModuloApp) {
             onPedirEntrada = { opcionEntrada ->
                 entradaPara = opcionEntrada
                 textoEntrada = ""
+                textosMulti = List(opcionEntrada.entradas.size) { "" }
             },
             onAbrir = { abrirEnlace(context, it) },
             onVolver = { abierta = null }
@@ -188,20 +191,51 @@ fun PantallaModulo(modulo: ModuloApp) {
             onDismissRequest = { entradaPara = null },
             title = { Text(opcionEntrada.emoji + " " + opcionEntrada.titulo) },
             text = {
-                OutlinedTextField(
-                    value = textoEntrada,
-                    onValueChange = { textoEntrada = it },
-                    label = { Text(opcionEntrada.entrada ?: "Valor") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (opcionEntrada.entradas.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        opcionEntrada.entradas.forEachIndexed { i, etiqueta ->
+                            OutlinedTextField(
+                                value = textosMulti.getOrElse(i) { "" },
+                                onValueChange = { v ->
+                                    textosMulti = textosMulti.toMutableList().also { lista ->
+                                        while (lista.size < opcionEntrada.entradas.size) lista.add("")
+                                        lista[i] = v
+                                    }
+                                },
+                                label = { Text(etiqueta) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = textoEntrada,
+                        onValueChange = { textoEntrada = it },
+                        label = { Text(opcionEntrada.entrada ?: "Valor") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 TextButton(
-                    enabled = textoEntrada.isNotBlank(),
+                    enabled = if (opcionEntrada.entradas.isNotEmpty()) {
+                        textosMulti.size >= opcionEntrada.entradas.size && textosMulti.all { it.isNotBlank() }
+                    } else {
+                        textoEntrada.isNotBlank()
+                    },
                     onClick = {
-                        val codigo = (opcionEntrada.plantilla ?: "{0}").replace("{0}", textoEntrada.trim())
+                        var codigo = opcionEntrada.plantilla ?: "{0}"
+                        if (opcionEntrada.entradas.isNotEmpty()) {
+                            textosMulti.forEachIndexed { i, valor ->
+                                codigo = codigo.replace("{$i}", valor.trim())
+                            }
+                        } else {
+                            codigo = codigo.replace("{0}", textoEntrada.trim())
+                        }
                         entradaPara = null
                         marcar(codigo)
                     }
@@ -469,7 +503,7 @@ private fun CabeceraModulo(modulo: ModuloApp) {
 @Composable
 private fun TarjetaOpcion(opcion: OpcionMenu, onToque: (OpcionMenu) -> Unit, onVerPasos: (OpcionMenu) -> Unit) {
     val acento = Color(opcion.color.toInt())
-    val directa = !opcion.pendiente && opcion.codigos.isNotEmpty() && opcion.entrada == null
+    val directa = !opcion.pendiente && opcion.codigos.isNotEmpty() && opcion.entrada == null && opcion.entradas.isEmpty()
     ElevatedCard(
         shape = RoundedCornerShape(22.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
@@ -715,7 +749,54 @@ private fun DetalleOpcion(
                 }
             }
 
-            if (opcion.entrada == null && opcion.codigos.isNotEmpty()) {
+            if (opcion.entradas.isNotEmpty() && opcion.plantilla != null) {
+                ElevatedCard(
+                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        opcion.entradas.forEach { etiqueta ->
+                            Text(
+                                etiqueta.uppercase(),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 2.sp
+                            )
+                        }
+                        if (!opcion.ocultarCodigos) {
+                            Text(
+                                opcion.plantilla
+                                    .replace("{0}", "···")
+                                    .replace("{1}", "···")
+                                    .replace("{2}", "···"),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = acento
+                            )
+                        }
+                        Button(
+                            onClick = { onPedirEntrada(opcion) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = acento),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                "⌨️ Completar y marcar",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (opcion.entrada == null && opcion.entradas.isEmpty() && opcion.codigos.isNotEmpty()) {
                 ElevatedCard(
                     shape = RoundedCornerShape(22.dp),
                     modifier = Modifier.fillMaxWidth()
