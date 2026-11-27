@@ -64,6 +64,7 @@ class AsistenteUssd : AccessibilityService() {
         val monto = prefs.getString("asistente_monto", "") ?: ""
         val concepto = prefs.getString("asistente_concepto", "") ?: ""
         val moneda = prefs.getString("asistente_moneda", "CUP") ?: "CUP"
+        val tipoTransfer = prefs.getString("asistente_tipo", "terceros") ?: "terceros"
         if (destino.isBlank() && monto.isBlank() && concepto.isBlank() && telefono.isBlank()) return
 
         val raiz = rootInActiveWindow ?: return
@@ -87,9 +88,18 @@ class AsistenteUssd : AccessibilityService() {
             texto.contains("confirmar", true) ||
             texto.contains("confirma", true)
         val esMoneda = Regex("\\b(moneda|divisa|cup|mlc)\\b", RegexOption.IGNORE_CASE).containsMatchIn(texto)
+        val esTipoTransfer = texto.contains("tercero", true) || texto.contains("propi", true) ||
+            texto.contains("ajen", true)
         if (campo == null) {
             if (esConfirmacion) {
                 pulsarBoton()
+            } else if (esTipoTransfer) {
+                val buscados = if (tipoTransfer == "terceros") {
+                    listOf("tercero", "ajen")
+                } else {
+                    listOf("propi")
+                }
+                pulsarPrimeraOpcion(buscados)
             } else if (esMoneda) {
                 pulsarBotonDeTexto(moneda)
             }
@@ -98,6 +108,7 @@ class AsistenteUssd : AccessibilityService() {
         if (!campo.text.isNullOrBlank()) return
 
         val valor = when {
+            esConfirmacion -> "1"
             texto.contains("monto", ignoreCase = true) ||
                 texto.contains("importe", ignoreCase = true) ||
                 texto.contains("cantidad", ignoreCase = true) -> monto
@@ -148,6 +159,21 @@ class AsistenteUssd : AccessibilityService() {
         val raiz = rootInActiveWindow ?: return
         val boton = buscarBotonConTexto(raiz, buscado, 0) ?: return
         boton.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+    }
+
+    private fun pulsarPrimeraOpcion(buscados: List<String>) {
+        val raiz = rootInActiveWindow ?: return
+        for (buscado in buscados) {
+            val boton = buscarBotonConTexto(raiz, buscado, 0)
+            if (boton != null) {
+                boton.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                handler.postDelayed({
+                    val raiz2 = rootInActiveWindow ?: return@postDelayed
+                    buscarBotonConTexto(raiz2, buscado, 0)?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                }, 200)
+                return
+            }
+        }
     }
 
     private fun buscarBoton(nodo: AccessibilityNodeInfo?, nivel: Int): AccessibilityNodeInfo? {

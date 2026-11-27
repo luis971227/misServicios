@@ -66,6 +66,7 @@ fun PantallaTransferir(
     var telefono by remember { mutableStateOf("") }
     var monto by remember { mutableStateOf("") }
     var moneda by remember { mutableStateOf("CUP") }
+    var tipoTransfer by remember { mutableStateOf("terceros") }
     var concepto by remember { mutableStateOf("") }
     var guardarNueva by remember { mutableStateOf(true) }
     var mensaje by remember { mutableStateOf<String?>(null) }
@@ -295,6 +296,30 @@ fun PantallaTransferir(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
+                            "Tipo:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        listOf("terceros" to "A un tercero", "propias" to "Entre mis cuentas").forEach { (valor, etiqueta) ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (tipoTransfer == valor) Color(Modulos.tmv.colorB.toInt()) else Color(0xFFEDEFF3),
+                                modifier = Modifier.clickable { tipoTransfer = valor }
+                            ) {
+                                Text(
+                                    etiqueta,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (tipoTransfer == valor) Color.White else Color(0xFF444B54)
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
                             "Moneda:",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
@@ -349,6 +374,7 @@ fun PantallaTransferir(
                         .putString("asistente_telefono", telefono.trim())
                         .putString("asistente_monto", monto.trim())
                         .putString("asistente_moneda", moneda)
+                        .putString("asistente_tipo", tipoTransfer)
                         .putString("asistente_concepto", concepto.trim())
                         .putLong("asistente_ts", System.currentTimeMillis())
                         .apply()
