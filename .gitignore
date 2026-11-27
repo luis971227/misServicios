@@ -1,0 +1,19 @@
+# Gradle
+.gradle/
+build/
+
+# IntelliJ
+.idea/
+*.iml
+captures/
+
+# Android Studio
+local.properties
+
+# Cordova (no aplica, por si se mezcla con otro proyecto)
+platforms/
+plugins/
+
+# Varios
+*.apk.idsig
+.DS_Store

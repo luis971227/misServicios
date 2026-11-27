@@ -1,0 +1,3 @@
+<resources>
+    <string name="asistente_descripcion">Asistente de misServicios: cuando transfieres, rellena automáticamente los campos de los diálogos del banco (destino, monto, mensaje). Nunca escribe tu PIN ni confirma por ti.</string>
+</resources>
