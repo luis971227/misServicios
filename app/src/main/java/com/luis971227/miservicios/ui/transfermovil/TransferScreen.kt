@@ -68,12 +68,6 @@ fun PantallaTransferir(
     var monto by remember { mutableStateOf("") }
     var moneda by remember { mutableStateOf("CUP") }
     var tipoTransfer by remember { mutableStateOf("terceros") }
-    var viaCorta by remember {
-        mutableStateOf(
-            context.getSharedPreferences("miservicios", android.content.Context.MODE_PRIVATE)
-                .getBoolean("via_corta_preferida", false)
-        )
-    }
     var concepto by remember { mutableStateOf("") }
     var guardarNueva by remember { mutableStateOf(true) }
     var mensaje by remember { mutableStateOf<String?>(null) }
@@ -359,26 +353,6 @@ fun PantallaTransferir(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viaCorta = !viaCorta }
-                    ) {
-                        Text(if (viaCorta) "☑️" else "⬜", fontSize = 18.sp)
-                        Column(modifier = Modifier.padding(start = 10.dp)) {
-                            Text(
-                                "Vía corta directa (experimental)",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                "Marca todo de una vez para ir directo a la confirmación. Si tu banco no la acepta, la app continúa sola por el menú.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
                 }
             }
 
@@ -434,8 +408,6 @@ fun PantallaTransferir(
                         .putString("asistente_moneda", moneda)
                         .putString("asistente_tipo", tipoTransfer)
                         .putString("asistente_concepto", concepto.trim())
-                        .putBoolean("asistente_via_corta", viaCorta)
-                        .putBoolean("via_corta_preferida", viaCorta)
                         .putLong("asistente_ts", System.currentTimeMillis())
                         .apply()
                     val partes = mutableListOf(

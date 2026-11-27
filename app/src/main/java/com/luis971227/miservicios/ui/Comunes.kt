@@ -129,12 +129,7 @@ fun PantallaModulo(modulo: ModuloApp) {
             onTransferir = { destino, detalle ->
                 transferAbierta = false
                 transferResumen = destino to detalle
-                if (prefs.getBoolean("asistente_via_corta", false)) {
-                    val montoGuardado = prefs.getString("asistente_monto", "") ?: ""
-                    marcar("*444*45*1*" + destino + "*" + montoGuardado + "#")
-                } else {
-                    marcar("*444*45#")
-                }
+                marcar("*444*45#")
             }
         )
     } else if (comprasAbierta) {
