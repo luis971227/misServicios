@@ -102,30 +102,36 @@ object TransfermovilUssd {
         monto: String,
         moneda: String,
         telefono: String,
-        concepto: String
+        concepto: String,
+        origen: String = ""
     ): String? {
         return try {
             val destinoLimpio = destino.replace("-", "").trim()
             val montoLimpio = monto.trim()
             val tel = telefono.trim()
+            val origenLimpio = origen.replace("-", "").trim()
             if (destinoLimpio.isEmpty() || montoLimpio.isEmpty()) return null
             if (!destinoLimpio.all { it.isDigit() } || !montoLimpio.all { it.isDigit() }) return null
             if (destinoLimpio.length > 19 || montoLimpio.length > 19 || tel.length > 19) return null
+            val usaOrigen = origenLimpio.length >= 4 && origenLimpio.length <= 19 && origenLimpio.all { it.isDigit() }
             val monedaNum = when (moneda.uppercase()) {
                 "MLC" -> "2"
                 "USD" -> "3"
                 else -> "1"
             }
+            val msg = if (concepto.isNotEmpty() && concepto.all { it.isDigit() }) concepto else "0000"
             val semilla = Random().nextInt(100)
-            val payload = when (banco) {
+            val payload = when {
+                usaOrigen ->
+                    destinoLimpio + "*" + montoLimpio + "*" + monedaNum + "*0*" + origenLimpio + "*" +
+                        (if (tel.length == 8) tel else "0000") + "*0*" + msg + "*0"
+                banco == "01" || banco == "03" ->
                 "01", "03" ->
                     destinoLimpio + "*" + montoLimpio + "*" + monedaNum + "*" +
                         (if (tel.length == 8) tel else "00000000")
-                "02" -> {
-                    val msg = if (concepto.isNotEmpty() && concepto.all { it.isDigit() }) concepto else "0000"
+                banco == "02" ->
                     destinoLimpio + "*" + montoLimpio + "*" + monedaNum + "*" + monedaNum + "*0000*" +
                         (if (tel.length == 8) tel else "0000") + "*0*" + msg + "*0"
-                }
                 else ->
                     destinoLimpio + "*" + montoLimpio + "*" +
                         (if (tel.length == 8) tel else "00000000")

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -71,6 +72,14 @@ fun PantallaTransferir(
     var concepto by remember { mutableStateOf("") }
     var guardarNueva by remember { mutableStateOf(true) }
     var mensaje by remember { mutableStateOf<String?>(null) }
+    var origen by remember { mutableStateOf("auto") }
+    var nuevaOrigen by remember { mutableStateOf("") }
+    var tarjetasOrigen by remember {
+        mutableStateOf(
+            context.getSharedPreferences("miservicios", android.content.Context.MODE_PRIVATE)
+                .getStringSet("tarjetas_origen", emptySet())?.sorted() ?: emptyList()
+        )
+    }
     val bancoNombre = when (
         context.getSharedPreferences("miservicios", android.content.Context.MODE_PRIVATE)
             .getString("banco_tmv", "03")
@@ -346,6 +355,45 @@ fun PantallaTransferir(
                         seleccion = tipoTransfer,
                         alElegir = { tipoTransfer = it }
                     )
+                    FilaChip(
+                        titulo = "Origen:",
+                        opciones = listOf("auto" to "Del banco") +
+                            tarjetasOrigen.map { it to ("•••• " + it.takeLast(4)) },
+                        seleccion = origen,
+                        alElegir = { origen = it }
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = nuevaOrigen,
+                            onValueChange = { nuevaOrigen = it },
+                            label = { Text("Tu tarjeta de origen (opcional)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(
+                            onClick = {
+                                val tarjeta = nuevaOrigen.replace("-", "").trim()
+                                if (tarjeta.length in 4..19 && tarjeta.all { it.isDigit() }) {
+                                    val nuevas = (tarjetasOrigen + tarjeta).distinct().sorted()
+                                    tarjetasOrigen = nuevas
+                                    context.getSharedPreferences("miservicios", android.content.Context.MODE_PRIVATE)
+                                        .edit().putStringSet("tarjetas_origen", nuevas.toSet()).apply()
+                                    origen = tarjeta
+                                    nuevaOrigen = ""
+                                } else {
+                                    mensaje = "La tarjeta de origen debe tener entre 4 y 19 dígitos"
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            Text("＋", fontSize = 18.sp)
+                        }
+                    }
                     OutlinedTextField(
                         value = concepto,
                         onValueChange = { concepto = it },
@@ -408,6 +456,7 @@ fun PantallaTransferir(
                         .putString("asistente_moneda", moneda)
                         .putString("asistente_tipo", tipoTransfer)
                         .putString("asistente_concepto", concepto.trim())
+                        .putString("asistente_origen", if (origen == "auto") "" else origen)
                         .putLong("asistente_ts", System.currentTimeMillis())
                         .apply()
                     val partes = mutableListOf(
@@ -415,6 +464,7 @@ fun PantallaTransferir(
                         if (tipoTransfer == "terceros") "A un tercero" else "Entre mis cuentas",
                         "Banco: " + bancoNombre
                     )
+                    if (origen != "auto") partes.add("Desde: •••• " + origen.takeLast(4))
                     if (telefono.isNotBlank()) partes.add("Teléfono: " + telefono.trim())
                     if (concepto.isNotBlank()) partes.add("Concepto: " + concepto.trim())
                     onTransferir(numero, partes.joinToString(" · "))

@@ -135,7 +135,8 @@ fun PantallaModulo(modulo: ModuloApp) {
                 val telefono = prefs.getString("asistente_telefono", "") ?: ""
                 val moneda = prefs.getString("asistente_moneda", "CUP") ?: "CUP"
                 val concepto = prefs.getString("asistente_concepto", "") ?: ""
-                val directa = TransfermovilUssd.construirTransferencia(banco, destino, monto, moneda, telefono, concepto)
+                val origen = prefs.getString("asistente_origen", "") ?: ""
+                val directa = TransfermovilUssd.construirTransferencia(banco, destino, monto, moneda, telefono, concepto, origen)
                 marcar(directa ?: "*444*45#")
             }
         )
