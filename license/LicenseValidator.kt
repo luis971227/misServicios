@@ -19,7 +19,7 @@ import javax.crypto.spec.SecretKeySpec
  */
 object LicenseValidator {
 
-    const val SECRET = "SEYEAL-LICENCIA-SECRET-2026-v1"
+    const val SECRET = "SEYEAL-0758pf1q5zq42eeablb3oss1-2026"
     private const val APP_CODE = "$appCode"
 
     private val BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".toCharArray()
