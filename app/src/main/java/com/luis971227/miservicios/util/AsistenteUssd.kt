@@ -43,9 +43,10 @@ class AsistenteUssd : AccessibilityService() {
         ) return
         if (pendiente) return
         pendiente = true
-        handler.postDelayed({ pendiente = false; intentar() }, 150)
-        handler.postDelayed({ intentar() }, 600)
-        handler.postDelayed({ intentar() }, 1400)
+        handler.post { pendiente = false; intentar() }
+        handler.postDelayed({ intentar() }, 100)
+        handler.postDelayed({ intentar() }, 300)
+        handler.postDelayed({ intentar() }, 800)
     }
 
     override fun onInterrupt() {}
@@ -131,7 +132,9 @@ class AsistenteUssd : AccessibilityService() {
             hecho = campo.text?.toString() == valor
         }
         if (hecho) {
-            handler.postDelayed({ pulsarBoton() }, 250)
+            pulsarBoton()
+            handler.postDelayed({ pulsarBoton() }, 200)
+            handler.postDelayed({ pulsarBoton() }, 600)
         }
     }
 
