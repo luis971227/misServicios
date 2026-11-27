@@ -75,7 +75,7 @@ fun PantallaTransferir(
     var origen by remember { mutableStateOf("auto") }
     var nuevaOrigen by remember { mutableStateOf("") }
     var tarjetasOrigen by remember {
-        mutableStateOf(
+        mutableStateOf<List<String>>(
             context.getSharedPreferences("miservicios", android.content.Context.MODE_PRIVATE)
                 .getStringSet("tarjetas_origen", emptySet())?.sorted() ?: emptyList()
         )

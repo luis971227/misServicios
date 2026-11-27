@@ -126,7 +126,6 @@ object TransfermovilUssd {
                     destinoLimpio + "*" + montoLimpio + "*" + monedaNum + "*0*" + origenLimpio + "*" +
                         (if (tel.length == 8) tel else "0000") + "*0*" + msg + "*0"
                 banco == "01" || banco == "03" ->
-                "01", "03" ->
                     destinoLimpio + "*" + montoLimpio + "*" + monedaNum + "*" +
                         (if (tel.length == 8) tel else "00000000")
                 banco == "02" ->
