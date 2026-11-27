@@ -1,6 +1,8 @@
 package com.luis971227.miservicios.util
 
 import android.accessibilityservice.AccessibilityService
+
+import com.luis971227.miservicios.marcarCodigo
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Bundle
@@ -84,6 +86,21 @@ class AsistenteUssd : AccessibilityService() {
             texto.contains("fallid", ignoreCase = true)
         ) {
             ocultarCortina()
+            prefs.edit().putBoolean("asistente_via_corta", false).apply()
+            return
+        }
+        if (prefs.getBoolean("asistente_via_corta", false) &&
+            (
+                texto.contains("incorrect", ignoreCase = true) ||
+                    texto.contains("no v\u00e1lid", ignoreCase = true) ||
+                    texto.contains("invalid", ignoreCase = true) ||
+                    texto.contains("error", ignoreCase = true) ||
+                    texto.contains("denegad", ignoreCase = true) ||
+                    texto.contains("no se pued", ignoreCase = true)
+                )
+        ) {
+            prefs.edit().putBoolean("asistente_via_corta", false).apply()
+            marcarCodigo(applicationContext, "*444*45#", true)
             return
         }
         if (cortina == null && !cortinaPendiente && !cortinaOcultadaManual) {
@@ -100,7 +117,8 @@ class AsistenteUssd : AccessibilityService() {
             texto.contains("ajen", true)
         if (campo == null) {
             if (esConfirmacion) {
-                pulsarBoton()
+                ocultarCortina()
+                return
             } else if (esTipoTransfer) {
                 val buscados = if (tipoTransfer == "terceros") {
                     listOf("tercero", "ajen")
@@ -114,9 +132,12 @@ class AsistenteUssd : AccessibilityService() {
             return
         }
         if (!campo.text.isNullOrBlank()) return
+        if (esConfirmacion) {
+            ocultarCortina()
+            return
+        }
 
         val valor = when {
-            esConfirmacion -> "1"
             texto.contains("monto", ignoreCase = true) ||
                 texto.contains("importe", ignoreCase = true) ||
                 texto.contains("cantidad", ignoreCase = true) -> monto
